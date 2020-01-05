@@ -232,9 +232,28 @@ class GSXHandler {
 		);
 	}
 	
+	private static function isValidIdentifier($id) {
+		return preg_match("/^[0-9a-zA-Z]{1,18}$/", $id);
+	}
+	
 	public function testAuthentication() {
 		if ($this->curlSend("GET", "/authenticate/check"))
 			return true;
 		return false;
+	}
+	
+	public function ProductDetails($id) {
+		$id = trim($id);
+		$now = date(DATE_ATOM);
+		
+		if (!self::isValidIdentifier($id))
+			return false;
+		
+		return $this->curlSend("POST", "/repair/product/details",
+		[],
+		[
+			"unitReceivedDateTime" => $now,
+			"device" => ["id" => $id]
+		]);
 	}
 }
