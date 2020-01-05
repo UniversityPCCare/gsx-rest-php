@@ -196,7 +196,8 @@ class GSXHandler {
 		$curlError = curl_error($ch);
 		switch ($httpCode) {
 			case 200: #Success
-				$this->setAuthTokenLastUsedTs();
+				if ($endpoint != "/authenticate/check")
+					$this->setAuthTokenLastUsedTs();
 				if (json_decode($response))
 					return json_decode($response);
 				return $response;
@@ -250,7 +251,6 @@ class GSXHandler {
 			return false;
 		
 		return $this->curlSend("POST", "/repair/product/details",
-		[],
 		[
 			"unitReceivedDateTime" => $now,
 			"device" => ["id" => $id]
