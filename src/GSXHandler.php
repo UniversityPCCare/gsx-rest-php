@@ -233,8 +233,14 @@ class GSXHandler {
 		);
 	}
 	
-	private static function isValidIdentifier($id) {
+	private static function isValidProductIdentifier($id) {
 		return preg_match("/^[0-9a-zA-Z]{1,18}$/", $id);
+		#this is the regex provided by Apple
+	}
+	
+	private static function isValidRepairIdentifier($id) {
+		return preg_match("/[0-9A-Z]{1,15}/", $id);
+		#this is the regex provided by Apple
 	}
 	
 	public function testAuthentication() {
@@ -247,7 +253,7 @@ class GSXHandler {
 		$id = trim($id);
 		$now = date(DATE_ATOM);
 		
-		if (!self::isValidIdentifier($id))
+		if (!self::isValidProductIdentifier($id))
 			return false;
 		
 		return $this->curlSend("POST", "/repair/product/details",
@@ -255,5 +261,34 @@ class GSXHandler {
 			"unitReceivedDateTime" => $now,
 			"device" => ["id" => $id]
 		]);
+	}
+	
+	public function RepairAudit($id) {
+		$id = trim($id);
+		if (self::isValidRepairIdentifier($id))
+			return $this->curlSend("GET", "/repair/audit?repairId=$id");
+		return false;
+	}
+	
+	public function RepairSummary($ids) {
+		if (!is_array($ids))
+			$ids = [$ids];
+		$validIds = [];
+		foreach ($ids as $id) {
+			$id = trim($id);
+			if (self::isValidRepairIdentifier($id))
+				$validIds[] = $id;
+		}
+		if (count($validIds))
+			return $this->curlSend("POST", "/repair/summary",
+				["repairIds" => $validIds]);
+		return false;
+	}
+	
+	public function RepairDetails($id) {
+		$id = trim($id);
+		if (self::isValidRepairIdentifier($id))
+			return $this->curlSend("GET", "/repair/details?repairId=$id");
+		return false;
 	}
 }
