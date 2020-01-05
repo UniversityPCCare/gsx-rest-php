@@ -33,9 +33,10 @@ class GSXHandler {
 		$this->SOLD_TO = $config["SOLD_TO"];
 		$this->ACCEPT_LANGUAGE = $config["ACCEPT_LANGUAGE"];
 		
+		date_default_timezone_set($config["TZ"]);
+		
 		$this->testConfig();
 		$this->loadFromDB();
-		$this->curlSend(1,2,3,4);
 	}
 	
 	private function testConfig() {
@@ -55,6 +56,49 @@ class GSXHandler {
 			throw new \Exception("Invalid GSX User Email provided.");
 		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}_[A-Z]{2}/", $this->ACCEPT_LANGUAGE))
 			throw new \Exception("Invalid Accept-Language header specified in config.ini! (Default: en_US)");
+	}
+	
+	private function isAuthTokenValid() {
+		$lastUsedThreshold = "30 minute";
+		$createdThreshold = "12 hour";
+		
+		if ($this->authToken == null or $this->authTokenCreatedTs == null) return false;
+		elseif ($this->authTokenCreatedTs != null and $this->authTokenLastUsedTs == null and strtotime("+$createdThreshold", strtotime($this->authTokenCreatedTs)) < time()) return false;
+		elseif ($this->authTokenLastUsedTs != null and strtotime("+$lastUsedThreshold", strtotime($this->authTokenLastUsedTs)) < time()) return false;
+		else return true;
+	}
+	
+	private function fetchAuthToken() {
+		if ($this->activationToken == null)
+			throw new \Exception("Tried to retrieve Auth Token but user ($this->gsxUserEmail) does not have an Activation Token");
+		elseif ($this->activationToken != null and $this->isActivationTokenConsumed and $this->authToken == null)
+			throw new \Exception("Tried to retrieve Auth Token but user's ($this->gsxUserEmail) Activation Token has already been consumed and no Auth Token is stored.");
+		
+		$tokenToUse = $this->authToken == null ? $this->activationToken : $this->authToken;
+		$response = $this->curlSend("POST", "/authenticate/token",
+		["userAppleId"=>$this->gsxUserEmail,"authToken"=>$tokenToUse]);
+		if (property_exists($response, "authToken")) {
+			$this->setAuthToken($response->authToken);
+			return;
+		}
+		else
+			throw new \Exception("Tried to fetch Auth Token for user ($this->gsxUserEmail) but did not receive one from GSX\n" . var_export($response, true));
+	}
+	
+	private function setAuthToken($authToken) {
+		if (self::validateGuid($authToken)) {
+			$this->authToken = $authToken;
+			$this->isActivationTokenConsumed = true;
+			$this->pdoHandler->storeAuthToken($this->gsxUserEmail, $authToken);
+			$this->loadFromDB();
+		}
+		else
+			throw new \Exception("Tried to store an invalidly-formatted Auth Token!");
+	}
+	
+	private function setAuthTokenLastUsedTs() {
+		$this->pdoHandler->storeAuthTokenLastUsedTs($this->gsxUserEmail, time());
+		$this->loadFromDB();
 	}
 	
 	private function loadFromDB() {
@@ -85,14 +129,6 @@ class GSXHandler {
 			throw new \Exception("Tried to store an invalidly-formatted Activation Token!");
 	}
 	
-	private function setAuthToken($authToken) {
-		if (self::validateGuid($authToken)) {
-			$this->authToken = $authToken;
-			$this->pdoHandler->storeAuthToken($this->gsxUserEmail, $authToken);
-		}
-		else
-			throw new \Exception("Tried to store an invalidly-formatted Auth Token!");
-	}
 	/*
 		Note that Apple's "GUIDs" go all the way A-Z instead of A-F
 	*/
@@ -101,7 +137,11 @@ class GSXHandler {
 	}
 
 	private function curlSend($method, $endpoint, $body = null, $additionalHeaders = null) {
-		//start by setting headers array
+		//first, make sure the Auth Token is still valid. If not, request a new one
+		if (!$this->isAuthTokenValid() and $endpoint != "/authenticate/token")
+			$this->fetchAuthToken();
+		
+		//then, start by setting headers array
 		$responseHeaders = array();
 		$headers = array(
 			"X-Apple-SoldTo: " . $this->SOLD_TO,
@@ -121,6 +161,7 @@ class GSXHandler {
 		//done setting headers array, begin preparing curl
 		if (strpos($endpoint, "/") !== 0)
 			$endpoint = "/" . $endpoint;
+
 		$default_charset = ini_get("default_charset"); #store current charset, because...
 		ini_set('default_charset', NULL); #cURL tries to add boundaries which GSX isn't expecting
 		$ch = curl_init($this->BASE_URL . $endpoint);
@@ -149,24 +190,50 @@ class GSXHandler {
 		//done building curl object, send it
 		$response = curl_exec($ch);
 		ini_set("default_charset", $default_charset); #return this back to what it was
-		$this->logCurlRequest($ch, $headers, $responseHeaders, $response);
+		$this->logCurlRequest($ch, $endpoint, $headers, $responseHeaders, $response);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$curlErrorNo = curl_errno($ch);
+		$curlError = curl_error($ch);
+		switch ($httpCode) {
+			case 200: #Success
+				$this->setAuthTokenLastUsedTs();
+				if (json_decode($response))
+					return json_decode($response);
+				return $response;
+				break;
+			case 401: #Unauthorized
+			case 403: #Forbidden
+				if ($endpoint == "/authenticate/token")
+					throw new \Exception("Tried retrieving new Auth Token for user ($this->gsxUserEmail), received HTTP $httpCode. User must manually retrieve a new Activation Token from GSX to continue.");
+				else
+					throw new \Exception("User ($this->gsxUserEmail) is not authorized. HTTP $httpCode");
+				break;
+			case false: #cURL error
+				throw new \Exception("Error sending request. cURL error $curlErrorNo. Error: $curlError");
+				break;
+			default:
+				throw new \Exception("Invalid response received from GSX. Expected HTTP200, received HTTP$httpCode");
+		}
 	}
 	
-	private function logCurlRequest($ch, $headers, $responseHeaders, $response) {
+	private function logCurlRequest($ch, $endpoint, $headers, $responseHeaders, $response) {
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ?? null;
 		$curlErrorNo = curl_errno($ch);
 		$curlError = curl_error($ch);
-		//error_log("$httpCode\n$curlErrorNo\n$curlError");
-		//error_log(var_export($headers, true));
-		//error_log(var_export($responseHeaders, true));
-		//error_log(var_export($response, true));
+		error_log(var_export([
+			"endpoint" => $endpoint,
+			"httpCode" => $httpCode,
+			"curlErrorNo" => $curlErrorNo,
+			"curlError" => $curlError,
+			"headers" => $headers,
+			"responseHeaders" => $responseHeaders,
+			"response" => $response
+		], true));
 	}
 	
 	public function testAuthentication() {
-		$this->curlSend("GET", "/authenticate/check");
-	}
-	
-	public function fetchAuthToken() {
-		
+		if ($this->curlSend("GET", "/authenticate/check"))
+			return true;
+		return false;
 	}
 }

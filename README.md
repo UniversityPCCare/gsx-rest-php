@@ -1,13 +1,14 @@
 About
 =====
 
-GSX-Rest is a PHP library that handles interactions with Apple's GSX REST API. It is a spiritual successor to [filipp/gsxlib][1],
-which was used to interact with Apple's GSX SOAP API, which was retired in late 2019.
+GSX-Rest is a PHP library that handles interactions with Apple's GSX REST API. It is a spiritual successor to [filipp/gsxlib][1] 
+used to interact with Apple's GSX SOAP API, which was retired in late 2019.
 
 Requirements
 ===========
 
 - PHP >7.0
+- MySQL (for authorization token persistence)
 - GSX Client Certificate and Configuration (see below)
 - GSX account with "Web Services" privilege enabled in MyAccess (see below)
 
@@ -36,5 +37,10 @@ You will need to work with the GSX Web Support team to obtain the following:
   
 Follow the initial setup guide in Apple's eServiceCentral to get started.
 
+GSX account with "Web Services" privilege enabled
+===
+
+You (or anyone else with admin access to MyAccess) will need to provision at least one account
+in MyAccess to have the "Web Services" privilege for GSX.
 
 [1]: https://github.com/filipp/gsxlib
