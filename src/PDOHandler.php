@@ -40,4 +40,48 @@ class PDOHandler {
 				throw new \Exception("Could not create table");
 		}
 	}
+		
+	private static function formatTime($time) {
+		return date("Y-m-d H:i:s", $time);
+	}
+	
+	public function fetchTokenDetails($userEmail) {
+		$sql = "SELECT * FROM token WHERE userEmail = ? LIMIT 1";
+		$statement = $this->pdo->prepare($sql);
+		$statement->execute([$userEmail]);
+		$tokenDetails = $statement->fetch();
+		if (!$tokenDetails) {
+			$this->createTokenDetails($userEmail);
+			$statement->execute([$userEmail]);
+			$tokenDetails = $statement->fetch();
+		}
+		return $tokenDetails;
+	}
+	
+	public function createTokenDetails($userEmail) {
+		$sql = "INSERT INTO token (userEmail, activationToken, isActivationTokenConsumed, authToken, authTokenCreatedTs, authTokenLastUsedTs) VALUES (?, NULL, '0', NULL, NULL, NULL)";
+		$statement = $this->pdo->prepare($sql);
+		$statement->execute([$userEmail]);
+	}
+	
+	public function storeActivationToken($userEmail, $activationToken) {
+		$sql = "UPDATE token SET activationToken = ? WHERE userEmail = ?";
+		$statement = $this->pdo->prepare($sql);
+		return $statement->execute([$activationToken, $userEmail]);
+	}
+	
+	public function storeAuthToken($userEmail, $authToken) {
+		$sql = "UPDATE token SET isActivationTokenConsumed = 1, authToken = ?, authTokenCreatedTs = ?, authTokenLastUsedTs = ? WHERE userEmail = ?";
+		$statement = $this->pdo->prepare($sql);
+		$ts = self::formatTime(time());
+		return $statement->execute([$authToken, $ts, $ts, $userEmail]);
+	}
+	
+	public function storeAuthTokenLastUsedTs($userEmail, $time) {
+		$sql = "UPDATE token SET authTokenLastUsedTs = ? WHERE userEmail = ?";
+		$time = self::formatTime($time);
+		$statement = $this->pdo->prepare($sql);
+		return $statement->execute([$time, $userEmail]);
+	}
+	
 }
