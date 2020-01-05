@@ -65,7 +65,7 @@ class PDOHandler {
 	}
 	
 	public function storeActivationToken($userEmail, $activationToken) {
-		$sql = "UPDATE token SET activationToken = ? WHERE userEmail = ?";
+		$sql = "UPDATE token SET activationToken = ?, isActivationTokenConsumed = 0 WHERE userEmail = ?";
 		$statement = $this->pdo->prepare($sql);
 		return $statement->execute([$activationToken, $userEmail]);
 	}

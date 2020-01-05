@@ -122,6 +122,7 @@ class GSXHandler {
 	public function setActivationToken($activationToken) {
 		if (self::validateGuid($activationToken)) {
 			$this->activationToken = $activationToken;
+			$this->isActivationTokenConsumed = 0;
 			$this->pdoHandler->storeActivationToken($this->gsxUserEmail, $activationToken);
 			return true;
 		}
