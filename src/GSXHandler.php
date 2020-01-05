@@ -220,15 +220,16 @@ class GSXHandler {
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ?? null;
 		$curlErrorNo = curl_errno($ch);
 		$curlError = curl_error($ch);
-		error_log(var_export([
-			"endpoint" => $endpoint,
-			"httpCode" => $httpCode,
-			"curlErrorNo" => $curlErrorNo,
-			"curlError" => $curlError,
-			"headers" => $headers,
-			"responseHeaders" => $responseHeaders,
-			"response" => $response
-		], true));
+		$this->pdoHandler->storeLogEntry(
+			$this->gsxUserEmail,
+			$endpoint,
+			$httpCode,
+			$curlErrorNo,
+			$curlError,
+			json_encode($headers),
+			json_encode($responseHeaders),
+			json_encode($response)
+		);
 	}
 	
 	public function testAuthentication() {
