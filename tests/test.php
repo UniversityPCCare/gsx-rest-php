@@ -1,11 +1,8 @@
 <?php
 
 require_once("../src/GSXHandler.php");
+require_once("test_declarations.php");
 
-$userEmail = "test@example.com";
-$shipTo = "0000123456";
-$activationToken = "dbacad16-61fe-4a6e-842c-a6dda53dec9x";
-$serial = "AABBCCDDEEFF";
 
 $gsx = new UPCC\GSXHandler($userEmail, $shipTo);
 $gsx->setActivationToken($activationToken);

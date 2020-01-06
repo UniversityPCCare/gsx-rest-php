@@ -1,0 +1,44 @@
+<?php
+
+/**
+*  An email address that has "Web Privileges" enabled for GSX in MyAccess (usually, this is your email address)
+*/
+$userEmail = "test@example.com";
+
+/**
+*  Your Ship-to number. This is used in almost all requests.
+*/
+$shipTo = "0000123456";
+
+/**
+*  An activation token obtained from Apple. Will be used to generate an AuthToken.
+*/
+$activationToken = "dbacad16-61fe-4a6e-842c-a6dda53dec9x";
+
+/**
+*  A valid Apple Serial Number or IMEI number. Will be used to test the following endpoints:
+*		ProductDetails
+*		RepairEligibility
+*		ComponentIssueLookup
+*		DiagnosticsSuites
+*		DiagnosticsLookup
+*		ArticleIdLookup
+*		PartsSummary
+*/
+$serial = "AABBCCDDEEFF";
+
+/**
+*	A valid GSX Repair Number. Will be used to test the following endpoints:
+*		RepairAudit
+*		RepairDetails
+*		RepairSummary
+*		RepairAudit
+*/
+$repairNumber = "G000012345";
+
+/**
+*  An article ID. The default value (OP22) is a valid article and does not need to be changed.
+*  This will be used to test the following endpoints:
+*		ArticleContentLookup
+*/
+$articleId = "OP22";

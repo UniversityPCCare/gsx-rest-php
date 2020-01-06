@@ -1,6 +1,7 @@
 <?php
 namespace UPCC;
 require_once("PDOHandler.php");
+require_once("GSX.php");
 
 class GSXHandler {
 	private const INI_PATH = "../config/config.ini";
@@ -86,7 +87,7 @@ class GSXHandler {
 	}
 	
 	private function setAuthToken($authToken) {
-		if (self::validateGuid($authToken)) {
+		if (GSX::validateUuid($authToken)) {
 			$this->authToken = $authToken;
 			$this->isActivationTokenConsumed = true;
 			$this->pdoHandler->storeAuthToken($this->gsxUserEmail, $authToken);
@@ -120,7 +121,7 @@ class GSXHandler {
 	}
 	
 	public function setActivationToken($activationToken) {
-		if (self::validateGuid($activationToken)) {
+		if (GSX::validateUuid($activationToken)) {
 			$this->activationToken = $activationToken;
 			$this->isActivationTokenConsumed = 0;
 			$this->pdoHandler->storeActivationToken($this->gsxUserEmail, $activationToken);
@@ -128,13 +129,6 @@ class GSXHandler {
 		}
 		else
 			throw new \Exception("Tried to store an invalidly-formatted Activation Token!");
-	}
-	
-	/*
-		Note that Apple's "GUIDs" go all the way A-Z instead of A-F
-	*/
-	private static function validateGuid($guid) {
-		return (bool) preg_match("/[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}/", $guid);
 	}
 
 	private function curlSend($method, $endpoint, $body = null, $additionalHeaders = null) {
@@ -234,27 +228,18 @@ class GSXHandler {
 		);
 	}
 	
-	private static function isValidProductIdentifier($id) {
-		return preg_match("/^[0-9a-zA-Z]{1,18}$/", $id);
-		#this is the regex provided by Apple
-	}
-	
-	private static function isValidRepairIdentifier($id) {
-		return preg_match("/[0-9A-Z]{1,15}/", $id);
-		#this is the regex provided by Apple
-	}
-	
 	public function testAuthentication() {
 		if ($this->curlSend("GET", "/authenticate/check"))
 			return true;
 		return false;
 	}
 	
+	
 	public function ProductDetails($id) {
 		$id = trim($id);
 		$now = date(DATE_ATOM);
 		
-		if (!self::isValidProductIdentifier($id))
+		if (!GSX::isValidProductIdentifier($id))
 			return false;
 		
 		return $this->curlSend("POST", "/repair/product/details",
@@ -264,32 +249,173 @@ class GSXHandler {
 		]);
 	}
 	
-	public function RepairAudit($id) {
-		$id = trim($id);
-		if (self::isValidRepairIdentifier($id))
-			return $this->curlSend("GET", "/repair/audit?repairId=$id");
-		return false;
+	public function RepairSummary($body) {
+		return $this->curlSend("POST", "/repair/summary", $body);
 	}
 	
-	public function RepairSummary($ids) {
+	public function RepairSummaryByIds($ids) {
 		if (!is_array($ids))
 			$ids = [$ids];
 		$validIds = [];
 		foreach ($ids as $id) {
 			$id = trim($id);
-			if (self::isValidRepairIdentifier($id))
+			if (GSX::isValidRepairIdentifier($id))
 				$validIds[] = $id;
 		}
 		if (count($validIds))
-			return $this->curlSend("POST", "/repair/summary",
-				["repairIds" => $validIds]);
+			return $this->RepairSummary(["repairIds" => $validIds]);
 		return false;
+	}
+	
+	public function RepairSummaryById($id) {
+		return $this->RepairSummaryByIds([$id]);
 	}
 	
 	public function RepairDetails($id) {
 		$id = trim($id);
-		if (self::isValidRepairIdentifier($id))
+		if (GSX::isValidRepairIdentifier($id))
 			return $this->curlSend("GET", "/repair/details?repairId=$id");
+		return false;
+	}
+	
+	public function RepairEligibility($body) {}
+	
+	public function RepairUpdate($body) {}
+	
+	public function RepairAudit($id) {
+		$id = trim($id);
+		if (GSX::isValidRepairIdentifier($id))
+			return $this->curlSend("GET", "/repair/audit?repairId=$id");
+		return false;
+	}
+	
+	public function ProductSerializer($body) {}
+	
+	public function QuestionsLookup($body) {}
+	
+	public function LoanerReturn($body) {}
+	
+	public function CreateRepair($body) {}
+	
+	public function ComponentIssueLookup($body) {}
+	
+	public function ComponentIssueLookupByCode($code) {}
+	
+	public function ComponentIssueLookupById($id) {}
+	
+	public function ProductSerializerLookup($body) {}
+	
+	public function DiagnosticsSuites($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->curlSend("GET", "/diagnostics/suites?deviceId=$id");
+		return false;
+	}
+	
+	public function RunDiagnosticTest($suiteId, $id) {
+		$suiteId = trim($suiteId);
+		$id = trim($id);
+		
+		if (GSX::isValidDiagnosticSuiteIdentifier($suiteId) and GSX::isValidProductIdentifier($id)) {
+			return $this->curlSend("POST", "/diagnostics/initiate-test",
+				[
+					"diagnostics" => ["suiteId" => $suiteId],
+					"device" => ["device" => $id]
+				]);
+		}
+		return false;
+	}
+
+	public function DiagnosticsLookup($body) {}
+	
+	public function DiagnosticsCustomerReportUrl($eventNumber) {}
+	
+	public function DiagnosticsStatus($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->curlSend("POST", "/diagnostics/status", ["device"=>["id"=>$id]]);
+		return false;
+	}
+	
+	public function ConsignmentValidate($body) {}
+	
+	public function AcknowledgeConsignmentDelivery($body) {}
+	
+	public function ShipConsignmentDecreaseOrder($body) {}
+	
+	public function ConsignmentOrderLookup($body) {}
+	
+	public function ConsignmentDeliveryLookup($body) {
+		return $this->curlSend("POST", "/consignment/delivery/lookup", $body);
+	}
+	
+	public function ConsignmentDeliveryLookupByCode($code) {
+		$code = trim($code);
+		if (GSX::isValidConsignmentDeliveryCode($code))
+			return $this->ConsignmentDeliveryLookup(["deliveryStatusGroupCode"=>$code]);
+		return false;
+	}
+	
+	public function SubmitConsignmentDecreaseOrder($body) {}
+	
+	public function ArticleContentLookup($id) {
+		$id = trim($id);
+		if (is_string($id) and strlen($id) <= 20) #Apple documentation does not provide regex or a clear definition for this
+			return $this->curlSend("GET", "/content/article?articleId=$id");
+		return false;
+	}
+	
+	public function ArticleIdLookup($body) {
+		
+	}
+	
+	public function ArticleIdLookupByProductId($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->ArticleIdLookup(["device"=>["id"=>$id]]);
+		return false;
+	}
+	
+	public function DownloadDocumentPost($body) {}
+	
+	public function DownloadDocumentGet($documentType) {}
+	
+	public function AttachmentUploadAccess($attachments) {}
+	
+	public function PartsSummary($body) {}
+	
+	public function PartsSummaryByProductId($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->PartsSummary(["devices"=>[["id" => $id]]]);
+		return false;
+	}
+	
+	public function TechnicianLookup($body) {}
+	
+	public function TechnicianLookupByName($firstName, $lastName, $shipTo=null) {
+		$firstName = trim($firstName);
+		$lastName = trim($lastName);
+		$body = null;
+		if (is_string($firstName) and is_string($lastName)) {
+			$body = [
+				[
+					"condition" => "startsWith",
+					"field" => "firstName",
+					"value" => $firstName
+				],
+				[
+					"condition" => "startsWith",
+					"field" => "lastName",
+					"value" => $lastName
+				]
+			];
+			if (is_string($shipTo))
+				$body[] = ["condition" => "equals", "field" => "shipTo", "value" => $shipTo];
+		}
+		
+		if (is_array($body))
+			return $this->TechnicianLookup($body);
 		return false;
 	}
 }
