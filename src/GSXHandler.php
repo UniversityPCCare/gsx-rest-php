@@ -327,7 +327,20 @@ class GSXHandler {
 		return false;
 	}
 
-	public function DiagnosticsLookup($body) {}
+	public function DiagnosticsLookup($body) {
+		return $this->curlSend("POST", "/diagnostics/lookup", $body);
+	}
+	
+	public function DiagnosticsLookupByProductId($id, $maximumResults=null) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id)) {
+			$body = ["device"=>["id"=>$id]];
+			if (is_numeric($maximumResults))
+				$body["maximumDiagsReturned"] = $maximumResults;
+			return $this->DiagnosticsLookup($body);
+		}
+		return false;
+	}
 	
 	public function DiagnosticsCustomerReportUrl($eventNumber) {}
 	

@@ -64,10 +64,10 @@ Repair
 
 Diagnostics
 - [x] `/diagnostics/suites`
-- [ ] `/diagnostics/initiate-test`
-- [ ] `/diagnostics/lookup`
+- [x] `/diagnostics/initiate-test`
+- [x] `/diagnostics/lookup`
 - [ ] `/diagnostics/customer-report-url`
-- [ ] `/diagnostics/status`
+- [x] `/diagnostics/status`
 
 Consignment
 - [ ] `/consignment/validate`
