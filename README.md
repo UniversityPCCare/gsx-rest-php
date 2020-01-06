@@ -47,6 +47,7 @@ Implemented Endpoints
 - [x] `/authenticate/token`
 - [ ] `/authenticate/end-session`
 
+
 - [x] `/repair/summary`
 - [x] `/repair/details`
 - [ ] `/repair/eligibility`
@@ -60,11 +61,13 @@ Implemented Endpoints
 - [x] `/repair/product/details`
 - [ ] `/repair/product/serializer/lookup`
 
+
 - [x] `/diagnostics/suites`
 - [ ] `/diagnostics/initiate-test`
 - [ ] `/diagnostics/lookup`
 - [ ] `/diagnostics/customer-report-url`
 - [ ] `/diagnostics/status`
+
 
 - [ ] `/consignment/validate`
 - [ ] `/consignment/delivery/acknowledge`
@@ -73,8 +76,10 @@ Implemented Endpoints
 - [ ] `/consignment/delivery/lookup`
 - [ ] `/consignment/order/submit`
 
+
 - [x] `/content/article`
 - [ ] `/content/article/lookup`
+
 
 - [ ] `/document-download` (POST)
 - [ ] `/document-download` (GET)
