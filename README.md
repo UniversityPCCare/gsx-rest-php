@@ -35,9 +35,9 @@ After setting up `config\config.ini`:
     
     require_once("../src/GSXHandler.php");
     
-    $gsx = new UPCC\GSXHandler($gsxUserEmail. $gsxShipTo);
+    $gsx = new UPCC\GSXHandler($gsxUserEmail, $gsxShipTo);
     $productDetails = $gsx->ProductDetails($serial);
-    echo $productDetails->configDescription;
+    echo $productDetails->device->configDescription;
     > iPhone XS Max
 
 Implemented Endpoints
