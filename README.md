@@ -20,7 +20,7 @@ Installation
 associate a user with it. Alternatively, in `config/config.ini` you can provide a MySQL user with sufficient
 privilege to create databases and the database will be created for you.
 - Rename `config/config.ini.example` to `config/config.ini` and set default configuration values
-- (Optional) Rename `tests/test_declarations.php.example` to 'tests/test_declaration.php` and setup
+- (Optional) Rename `tests/test_declarations.php.example` to `tests/test_declaration.php` and setup
 variables within. This is only necessary if you choose to run `tests/test.php` to verify your setup is working.
 - (Optional) After setting up `test_declarations.php`, `cd tests` and run `php ./test.php`
 - Upon first run, the database will be created for you (if you hadn't made it already), as well as the
@@ -43,11 +43,12 @@ After setting up `config\config.ini`:
 Implemented Endpoints
 ===
 
+Authenticate
 - [x] `/authenticate/check`
 - [x] `/authenticate/token`
 - [ ] `/authenticate/end-session`
 
-
+Repair
 - [x] `/repair/summary`
 - [x] `/repair/details`
 - [ ] `/repair/eligibility`
@@ -61,14 +62,14 @@ Implemented Endpoints
 - [x] `/repair/product/details`
 - [ ] `/repair/product/serializer/lookup`
 
-
+Diagnostics
 - [x] `/diagnostics/suites`
 - [ ] `/diagnostics/initiate-test`
 - [ ] `/diagnostics/lookup`
 - [ ] `/diagnostics/customer-report-url`
 - [ ] `/diagnostics/status`
 
-
+Consignment
 - [ ] `/consignment/validate`
 - [ ] `/consignment/delivery/acknowledge`
 - [ ] `/consignment/order/shipment`
@@ -76,11 +77,11 @@ Implemented Endpoints
 - [ ] `/consignment/delivery/lookup`
 - [ ] `/consignment/order/submit`
 
-
+Content
 - [x] `/content/article`
 - [ ] `/content/article/lookup`
 
-
+Other
 - [ ] `/document-download` (POST)
 - [ ] `/document-download` (GET)
 - [ ] `/attachment/upload-access`
