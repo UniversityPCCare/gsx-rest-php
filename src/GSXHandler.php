@@ -223,7 +223,7 @@ class GSXHandler {
 			$curlErrorNo,
 			$curlError,
 			json_encode($headers),
-			json_encode($body),
+			((is_array($body) and count($body)) ? json_encode($body) : null),
 			json_encode($responseHeaders),
 			json_encode($response)
 		);
