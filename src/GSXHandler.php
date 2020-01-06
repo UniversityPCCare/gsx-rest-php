@@ -321,7 +321,7 @@ class GSXHandler {
 			return $this->curlSend("POST", "/diagnostics/initiate-test",
 				[
 					"diagnostics" => ["suiteId" => $suiteId],
-					"device" => ["device" => $id]
+					"device" => ["id" => $id]
 				]);
 		}
 		return false;
