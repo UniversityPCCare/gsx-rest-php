@@ -40,6 +40,48 @@ After setting up `config\config.ini`:
     echo $productDetails->configDescription;
     > iPhone XS Max
 
+Implemented Endpoints
+===
+
+- [x] `/authenticate/check`
+- [x] `/authenticate/token`
+- [ ] `/authenticate/end-session`
+- [ ]
+- [x] `/repair/summary`
+- [x] `/repair/details`
+- [ ] `/repair/eligibility`
+- [ ] `/repair/update`
+- [x] `/repair/audit`
+- [ ] `/repair/product/serializer`
+- [ ] `/repair/questions`
+- [ ] `/repair/loaner/return`
+- [ ] `/repair/create`
+- [ ] `/repair/product/componentissue`
+- [x] `/repair/product/details`
+- [ ] `/repair/product/serializer/lookup`
+- [ ]
+- [x] `/diagnostics/suites`
+- [ ] `/diagnostics/initiate-test`
+- [ ] `/diagnostics/lookup`
+- [ ] `/diagnostics/customer-report-url`
+- [ ] `/diagnostics/status`
+- [ ]
+- [ ] `/consignment/validate`
+- [ ] `/consignment/delivery/acknowledge`
+- [ ] `/consignment/order/shipment`
+- [ ] `/consignment/order/lookup`
+- [ ] `/consignment/delivery/lookup`
+- [ ] `/consignment/order/submit`
+- [ ]
+- [x] `/content/article`
+- [ ] `/content/article/lookup`
+- [ ]
+- [ ] `/document-download` (POST)
+- [ ] `/document-download` (GET)
+- [ ] `/attachment/upload-access`
+- [ ] `/parts/summary`
+- [x] `/technician/lookup`
+
 GSX Client Certificate and Configuration
 ===
 
