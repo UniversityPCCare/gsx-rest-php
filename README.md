@@ -12,6 +12,19 @@ Requirements
 - GSX Client Certificate and Configuration (see below)
 - GSX account with "Web Services" privilege enabled in MyAccess (see below)
 
+Installation
+=====
+
+- Clone the repo using `git clone https://github.com/UniversityPCCare/gsx-rest-php.git`
+- Setup a MySQL instance if you haven't already. Create a database (default database name is `gsxrest`) and
+associate a user with it. Alternatively, in `config/config.ini` you can provide a MySQL user with sufficient
+privilege to create databases and the database will be created for you.
+- Rename `config/config.ini.example` to `config/config.ini` and set default configuration values
+- (Optional) Rename `tests/test_declarations.php.example` to 'tests/test_declaration.php` and setup
+variables within. This is only necessary if you choose to run `tests/test.php` to verify your setup is working.
+- (Optional) After setting up `test_declarations.php`, `cd tests` and run `php ./test.php`
+- Upon first run, the database will be created for you (if you hadn't made it already), as well as the
+tables within.
 
 Usage
 =====
