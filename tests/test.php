@@ -1,7 +1,7 @@
 <?php
 
-require_once("../src/GSXHandler.php");
-require_once("test_declarations.php");
+require_once(__DIR__ . "/../src/GSXHandler.php");
+require_once(__DIR__ . "/test_declarations.php");
 
 
 $gsx = new UPCC\GSXHandler($userEmail, $shipTo);

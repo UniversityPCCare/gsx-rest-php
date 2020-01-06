@@ -4,7 +4,7 @@ require_once("PDOHandler.php");
 require_once("GSX.php");
 
 class GSXHandler {
-	private const INI_PATH = "../config/config.ini";
+	private const INI_PATH = __DIR__ . "/../config/config.ini";
 	
 	private $CERT_PATH;
 	private $CERT_PASS;

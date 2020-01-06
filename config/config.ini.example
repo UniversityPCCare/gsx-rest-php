@@ -1,5 +1,5 @@
 [CERTIFICATE]
-CERT_PATH = "../config/certbundle.pem"
+CERT_PATH = "/path/to/certbundle.pem"
 CERT_PASS = "PASSWORD"
 
 [GSX]
