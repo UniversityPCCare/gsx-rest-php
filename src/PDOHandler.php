@@ -84,9 +84,9 @@ class PDOHandler {
 		return $statement->execute([$time, $userEmail]);
 	}
 	
-	public function storeLogEntry($userEmail, $endpoint, $httpCode, $curlErrorNo, $curlError, $headers, $responseHeaders, $response) {
+	public function storeLogEntry($userEmail, $endpoint, $httpCode, $curlErrorNo, $curlError, $headers, $body, $responseHeaders, $response) {
 		$ts = self::formatTime(time());
-		$sql = "INSERT INTO requestLog SET ts = ?, gsxUserEmail = ?, endpoint = ?, httpCode = ?, curlErrorNo = ?, curlError = ?, headers = ?, responseHeaders = ?, response = ?";
+		$sql = "INSERT INTO requestLog SET ts = ?, gsxUserEmail = ?, endpoint = ?, httpCode = ?, curlErrorNo = ?, curlError = ?, headers = ?, requestBody = ?, responseHeaders = ?, response = ?";
 		$statement = $this->pdo->prepare($sql);
 		$statement->execute([
 			$ts,
@@ -96,6 +96,7 @@ class PDOHandler {
 			$curlErrorNo,
 			$curlError,
 			$headers,
+			$body,
 			$responseHeaders,
 			$response
 		]);

@@ -9,13 +9,11 @@ $gsx->setActivationToken($activationToken);
 $gsx->testAuthentication();
 
 $product = $gsx->ProductDetails($serial);
-$repair = $gsx->RepairSummary($repairNumber);
+$repair = $gsx->RepairSummaryById($repairNumber);
 $article = $gsx->ArticleContentLookup($articleId);
 $diagnostics = $gsx->DiagnosticsSuites($serial);
 
-echo "<pre>";
-echo "Product is a $product->configDescription\n";
-echo "Retrieved $repair->totalNumberofRecords repairs\n";
+echo "Product is a " . $product->device->configDescription . "\n";
+echo "Retrieved $repair->totalNumberOfRecords repairs\n";
 echo "Article title is $article->title\n";
 echo "Diagnostics Suite available: " . $diagnostics->suiteDetails[0]->suiteName . "\n";
-echo "</pre>";

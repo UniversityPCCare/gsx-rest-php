@@ -185,7 +185,7 @@ class GSXHandler {
 		//done building curl object, send it
 		$response = curl_exec($ch);
 		ini_set("default_charset", $default_charset); #return this back to what it was
-		$this->logCurlRequest($ch, $endpoint, $headers, $responseHeaders, $response);
+		$this->logCurlRequest($ch, $endpoint, $headers, $body, $responseHeaders, $response);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		$curlErrorNo = curl_errno($ch);
 		$curlError = curl_error($ch);
@@ -212,7 +212,7 @@ class GSXHandler {
 		}
 	}
 	
-	private function logCurlRequest($ch, $endpoint, $headers, $responseHeaders, $response) {
+	private function logCurlRequest($ch, $endpoint, $headers, $body, $responseHeaders, $response) {
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ?? null;
 		$curlErrorNo = curl_errno($ch);
 		$curlError = curl_error($ch);
@@ -223,6 +223,7 @@ class GSXHandler {
 			$curlErrorNo,
 			$curlError,
 			json_encode($headers),
+			json_encode($body),
 			json_encode($responseHeaders),
 			json_encode($response)
 		);
