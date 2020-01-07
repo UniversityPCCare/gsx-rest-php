@@ -41,6 +41,21 @@ final class GSX {
 		#this is the regex provided by Apple
 	}
 	
+	public static function isValidComponentCode($componentCode) {
+		return preg_match("/.{1,7}/", $componentCode);
+		#Apple does not provide Regex, just a character limit
+	}
+	
+	public static function isValidIssueCode($issueCode) {
+		return preg_match("/.{1,6}/", $issueCode);
+		#Apple does not provide Regex, just a character limit
+	}
+	
+	public static function isValidReportedBy($reportedBy) {
+		return ($reportedBy == "TECH" or $reportedBy == "CUST");
+		#ENUM {"TECH", "CUSTOMER"}
+	}
+	
 	public static function isValidConsignmentDeliveryCode($code) {
 		switch ($code) {
 			case GSX::CONSIGNMENT_DELIVERY_CODE_OPEN:

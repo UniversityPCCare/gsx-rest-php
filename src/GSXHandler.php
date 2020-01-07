@@ -279,7 +279,16 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function RepairEligibility($body) {}
+	public function RepairEligibility($body) {
+		return $this->curlSend("POST", "/repair/eligibility", $body);
+	}
+	
+	public function RepairEligibilityByProductId($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->RepairEligibility(["device"=>["id"=>$id]]);
+		return false;
+	}
 	
 	public function RepairUpdate($body) {}
 	
@@ -292,17 +301,50 @@ class GSXHandler {
 	
 	public function ProductSerializer($body) {}
 	
-	public function QuestionsLookup($body) {}
+	public function QuestionsLookup($body) {
+		return $this->curlSend("POST", "/repair/questions", $body);
+	}
+	
+	public function QuestionsLookupByComponentIssue($id, $componentCode, $issueCode, $reportedBy) {
+		$id = trim($id);
+		$componentCode = trim($componentCode);
+		$issueCode = trim($issueCode);
+		$reportedBy = trim($reportedBy);
+		if (GSX::isValidProductIdentifier($id) 
+			and GSX::isValidComponentCode($componentCode) 
+			and GSX::isValidIssueCode($issueCode)
+			and GSX::isValidReportedBy($reportedBy)) {
+			return $this->QuestionsLookup([
+				"device" => ["id" => $id],
+				"componentIssues" => [
+					[
+						"priority" => 1,
+						"order" => 1,
+						"componentCode" => $componentCode,
+						"issueCode" => $issueCode,
+						"type" => $reportedBy
+					]
+				]
+			]);
+		}		
+	}
 	
 	public function LoanerReturn($body) {}
 	
 	public function CreateRepair($body) {}
 	
-	public function ComponentIssueLookup($body) {}
+	public function ComponentIssueLookup($body) {
+		return $this->curlSend("POST", "/repair/product/componentissue", $body);
+	}
 	
 	public function ComponentIssueLookupByCode($code) {}
 	
-	public function ComponentIssueLookupById($id) {}
+	public function ComponentIssueLookupById($id) {
+		$id = trim($id);
+		if (GSX::isValidProductIdentifier($id))
+			return $this->ComponentIssueLookup(["device"=>["id"=>$id]]);
+		return false;
+	}
 	
 	public function ProductSerializerLookup($body) {}
 	
@@ -396,13 +438,35 @@ class GSXHandler {
 	
 	public function AttachmentUploadAccess($attachments) {}
 	
-	public function PartsSummary($body) {}
+	public function PartsSummary($body) {
+		return $this->curlSend("POST", "/parts/summary", $body);
+	}
 	
 	public function PartsSummaryByProductId($id) {
 		$id = trim($id);
 		if (GSX::isValidProductIdentifier($id))
 			return $this->PartsSummary(["devices"=>[["id" => $id]]]);
 		return false;
+	}
+	
+	public function PartsSummaryByComponentIssue($id, $componentCode, $issueCode) {
+		$id = trim($id);
+		$componentCode = trim($componentCode);
+		$issueCode = trim($issueCode);
+		if (GSX::isValidProductIdentifier($id) and GSX::isValidComponentCode($componentCode) and GSX::isValidIssueCode($issueCode)) {
+			return $this->PartsSummary([
+				"devices" => [["id" => $id]],
+				"componentIssues" => [
+					[
+						"componentCode" => $componentCode,
+						"issueCode" => $issueCode,
+						"order" => 1,
+						"priority" => 1,
+						"type" => "TECH"
+					]
+				]
+			]);
+		}
 	}
 	
 	public function TechnicianLookup($body) {}

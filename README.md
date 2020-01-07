@@ -51,14 +51,14 @@ Authenticate
 Repair
 - [x] `/repair/summary`
 - [x] `/repair/details`
-- [ ] `/repair/eligibility`
+- [x] `/repair/eligibility`
 - [ ] `/repair/update`
 - [x] `/repair/audit`
 - [ ] `/repair/product/serializer`
 - [ ] `/repair/questions`
 - [ ] `/repair/loaner/return`
 - [ ] `/repair/create`
-- [ ] `/repair/product/componentissue`
+- [x] `/repair/product/componentissue`
 - [x] `/repair/product/details`
 - [ ] `/repair/product/serializer/lookup`
 
