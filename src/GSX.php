@@ -23,7 +23,11 @@ final class GSX {
 	const ARTICLE_HOWTO = "HOWTO_ARTICLES";
 	
 	public static function validateUuid($guid) {
-		return (bool) preg_match("/[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}/", $guid);
+		return (bool) preg_match("/^[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$/", $guid);
+	}
+	
+	public static function isValidShipTo($shipTo) {
+		return preg_match("/^[0-9A-Za-z]{1,10}$/", $shipTo);
 	}
 	
 	public static function isValidProductIdentifier($id) {
@@ -32,23 +36,28 @@ final class GSX {
 	}
 	
 	public static function isValidRepairIdentifier($id) {
-		return preg_match("/[0-9A-Z]{1,15}/", $id);
+		return preg_match("/^[0-9A-Z]{1,15}$/", $id);
 		#this is the regex provided by Apple
 	}
 	
 	public static function isValidDiagnosticSuiteIdentifier($id) {
-		return preg_match("/[0-9a-zA-Z]{1,40}/", $id);
+		return preg_match("/^[0-9a-zA-Z]{1,40}$/", $id);
 		#this is the regex provided by Apple
 	}
 	
 	public static function isValidComponentCode($componentCode) {
-		return preg_match("/.{1,7}/", $componentCode);
+		return preg_match("/^.{1,7}$/", $componentCode);
 		#Apple does not provide Regex, just a character limit
 	}
 	
 	public static function isValidIssueCode($issueCode) {
-		return preg_match("/.{1,6}/", $issueCode);
+		return preg_match("/^.{1,6}$/", $issueCode);
 		#Apple does not provide Regex, just a character limit
+	}
+	
+	public static function isValidPartNumber($partNumber) {
+		return preg_match("/^[a-z0-9A-Z\-\/]{3,18}$/", $partNumber);
+		#this is the regex provided by Apple
 	}
 	
 	public static function isValidReportedBy($reportedBy) {
@@ -56,7 +65,7 @@ final class GSX {
 		#ENUM {"TECH", "CUSTOMER"}
 	}
 	
-	public static function isValidConsignmentDeliveryCode($code) {
+	public static function isValidConsignmentDeliveryStatus($code) {
 		switch ($code) {
 			case GSX::CONSIGNMENT_DELIVERY_CODE_OPEN:
 			case GSX::CONSIGNMENT_DELIVERY_CODE_ALL:
@@ -64,6 +73,10 @@ final class GSX {
 				return true;
 		}
 		return false;
+	}
+	
+	public static function isValidConsignmentDeliveryNumber($deliveryNumber) {
+		return preg_match("/^[0-9]{1,15}$/", $deliveryNumber);
 	}
 	
 	public static function isValidArticleType($type) {

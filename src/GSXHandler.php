@@ -2,6 +2,7 @@
 namespace UPCC;
 require_once("PDOHandler.php");
 require_once("GSX.php");
+require_once("Request/ConsignmentValidateRequest.php");
 
 class GSXHandler {
 	private const INI_PATH = __DIR__ . "/../config/config.ini";
@@ -395,7 +396,9 @@ class GSXHandler {
 	
 	public function ConsignmentValidate($body) {}
 	
-	public function AcknowledgeConsignmentDelivery($body) {}
+	public function AcknowledgeConsignmentDelivery($body) {
+		return $this->curlSend("POST", "/consignment/delivery/acknowledge", $body);
+	}
 	
 	public function ShipConsignmentDecreaseOrder($body) {}
 	
@@ -405,9 +408,9 @@ class GSXHandler {
 		return $this->curlSend("POST", "/consignment/delivery/lookup", $body);
 	}
 	
-	public function ConsignmentDeliveryLookupByCode($code) {
+	public function ConsignmentDeliveryLookupByStatus($code) {
 		$code = trim($code);
-		if (GSX::isValidConsignmentDeliveryCode($code))
+		if (GSX::isValidConsignmentDeliveryStatus($code))
 			return $this->ConsignmentDeliveryLookup(["deliveryStatusGroupCode"=>$code]);
 		return false;
 	}
