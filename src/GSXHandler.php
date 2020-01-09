@@ -1,8 +1,6 @@
 <?php
 namespace UPCC;
-require_once("PDOHandler.php");
-require_once("GSX.php");
-require_once("Request/ConsignmentValidateRequest.php");
+
 
 class GSXHandler {
 	private const INI_PATH = __DIR__ . "/../config/config.ini";

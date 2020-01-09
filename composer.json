@@ -1,0 +1,15 @@
+{
+	"name": "upcc/gsx-rest-php",
+	"type": "library",
+	"description": "An interface to Apple's GSX RESTful API",
+	"homepage": "https://github.com/UniversityPCCare/gsx-rest-php",
+	"license": "GPL-3.0-or-later",
+	"require": {
+		"php": "^7.0",
+		"ext-mysqli": "*",
+		"ext-pdo_mysql": "*"
+	},
+	"autoload": {
+		"psr-4": {"UPCC\\": "src/"}
+	}
+}
