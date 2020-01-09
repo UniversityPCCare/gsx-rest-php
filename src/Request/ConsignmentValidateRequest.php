@@ -49,7 +49,7 @@ class ConsignmentValidateRequest {
 	}
 	
 	public function addSerializedPart($partNumber, $serial) {
-		if (!GSX::isValidProductIdentifier($serial))
+		if (!GSX::isValidDeviceIdentifier($serial))
 			throw new \Exception("Invalid format: product serial");
 		$this->addPart($partNumber, 1, $serial);
 	}

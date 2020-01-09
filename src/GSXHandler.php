@@ -239,7 +239,7 @@ class GSXHandler {
 		$id = trim($id);
 		$now = date(DATE_ATOM);
 		
-		if (!GSX::isValidProductIdentifier($id))
+		if (!GSX::isValidDeviceIdentifier($id))
 			return false;
 		
 		return $this->curlSend("POST", "/repair/product/details",
@@ -282,9 +282,9 @@ class GSXHandler {
 		return $this->curlSend("POST", "/repair/eligibility", $body);
 	}
 	
-	public function RepairEligibilityByProductId($id) {
+	public function RepairEligibilityByDeviceId($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->RepairEligibility(["device"=>["id"=>$id]]);
 		return false;
 	}
@@ -309,7 +309,7 @@ class GSXHandler {
 		$componentCode = trim($componentCode);
 		$issueCode = trim($issueCode);
 		$reportedBy = trim($reportedBy);
-		if (GSX::isValidProductIdentifier($id) 
+		if (GSX::isValidDeviceIdentifier($id) 
 			and GSX::isValidComponentCode($componentCode) 
 			and GSX::isValidIssueCode($issueCode)
 			and GSX::isValidReportedBy($reportedBy)) {
@@ -340,7 +340,7 @@ class GSXHandler {
 	
 	public function ComponentIssueLookupById($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->ComponentIssueLookup(["device"=>["id"=>$id]]);
 		return false;
 	}
@@ -349,7 +349,7 @@ class GSXHandler {
 	
 	public function DiagnosticsSuites($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->curlSend("GET", "/diagnostics/suites?deviceId=$id");
 		return false;
 	}
@@ -358,7 +358,7 @@ class GSXHandler {
 		$suiteId = trim($suiteId);
 		$id = trim($id);
 		
-		if (GSX::isValidDiagnosticSuiteIdentifier($suiteId) and GSX::isValidProductIdentifier($id)) {
+		if (GSX::isValidDiagnosticSuiteIdentifier($suiteId) and GSX::isValidDeviceIdentifier($id)) {
 			return $this->curlSend("POST", "/diagnostics/initiate-test",
 				[
 					"diagnostics" => ["suiteId" => $suiteId],
@@ -372,9 +372,9 @@ class GSXHandler {
 		return $this->curlSend("POST", "/diagnostics/lookup", $body);
 	}
 	
-	public function DiagnosticsLookupByProductId($id, $maximumResults=null) {
+	public function DiagnosticsLookupByDeviceId($id, $maximumResults=null) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id)) {
+		if (GSX::isValidDeviceIdentifier($id)) {
 			$body = ["device"=>["id"=>$id]];
 			if (is_numeric($maximumResults))
 				$body["maximumDiagsReturned"] = $maximumResults;
@@ -387,7 +387,7 @@ class GSXHandler {
 	
 	public function DiagnosticsStatus($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->curlSend("POST", "/diagnostics/status", ["device"=>["id"=>$id]]);
 		return false;
 	}
@@ -426,9 +426,9 @@ class GSXHandler {
 		
 	}
 	
-	public function ArticleIdLookupByProductId($id) {
+	public function ArticleIdLookupByDeviceId($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->ArticleIdLookup(["device"=>["id"=>$id]]);
 		return false;
 	}
@@ -443,9 +443,9 @@ class GSXHandler {
 		return $this->curlSend("POST", "/parts/summary", $body);
 	}
 	
-	public function PartsSummaryByProductId($id) {
+	public function PartsSummaryByDeviceId($id) {
 		$id = trim($id);
-		if (GSX::isValidProductIdentifier($id))
+		if (GSX::isValidDeviceIdentifier($id))
 			return $this->PartsSummary(["devices"=>[["id" => $id]]]);
 		return false;
 	}
@@ -454,7 +454,7 @@ class GSXHandler {
 		$id = trim($id);
 		$componentCode = trim($componentCode);
 		$issueCode = trim($issueCode);
-		if (GSX::isValidProductIdentifier($id) and GSX::isValidComponentCode($componentCode) and GSX::isValidIssueCode($issueCode)) {
+		if (GSX::isValidDeviceIdentifier($id) and GSX::isValidComponentCode($componentCode) and GSX::isValidIssueCode($issueCode)) {
 			return $this->PartsSummary([
 				"devices" => [["id" => $id]],
 				"componentIssues" => [
