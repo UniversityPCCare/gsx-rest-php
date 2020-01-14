@@ -51,9 +51,9 @@ class GSXHandler {
 		if (!isset($this->SOLD_TO) or strlen($this->SOLD_TO) !== 10)
 			throw new \Exception("Invalid GSX Sold-To account number specified in config.ini!");
 		if (!isset($this->gsxShipTo) or strlen($this->gsxShipTo)  !== 10)
-			throw new \Exception("Invalid GSX Ship-To number specified in config.ini!");
+			throw new \Exception("Invalid GSX Ship-To number provided!);
 		if (!isset($this->gsxUserEmail) or strlen($this->gsxUserEmail) === 0)
-			throw new \Exception("Invalid GSX User Email provided.");
+			throw new \Exception("Invalid GSX User Email provided!");
 		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}_[A-Z]{2}/", $this->ACCEPT_LANGUAGE))
 			throw new \Exception("Invalid Accept-Language header specified in config.ini! (Default: en_US)");
 	}
@@ -422,14 +422,19 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function ArticleIdLookup($body) {
-		
+	public function ArticleIdLookup($body, $pageSize=null, $pageNumber=null) {
+		$endpoint = "/content/article/lookup?";
+		if (isset($pageSize) and $pageSize > 0 and $pageSize <= 100)
+			$endpoint.= "pageSize=$pageSize&";
+		if (isset($pageNumber) and $pageNumber > 0)
+			$endpoint .= "pageNumber=$pageNumber";
+		return $this->curlSend("POST", $endpoint, $body);
 	}
 	
-	public function ArticleIdLookupByDeviceId($id) {
+	public function ArticleIdLookupByDeviceId($id, $pageSize=null, $pageNumber=null) {
 		$id = trim($id);
 		if (GSX::isValidDeviceIdentifier($id))
-			return $this->ArticleIdLookup(["device"=>["id"=>$id]]);
+			return $this->ArticleIdLookup(["device"=>["id"=>$id]], $pageSize, $pageNumber);
 		return false;
 	}
 	
