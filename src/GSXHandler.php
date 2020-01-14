@@ -51,7 +51,7 @@ class GSXHandler {
 		if (!isset($this->SOLD_TO) or strlen($this->SOLD_TO) !== 10)
 			throw new \Exception("Invalid GSX Sold-To account number specified in config.ini!");
 		if (!isset($this->gsxShipTo) or strlen($this->gsxShipTo)  !== 10)
-			throw new \Exception("Invalid GSX Ship-To number provided!);
+			throw new \Exception("Invalid GSX Ship-To number provided!");
 		if (!isset($this->gsxUserEmail) or strlen($this->gsxUserEmail) === 0)
 			throw new \Exception("Invalid GSX User Email provided!");
 		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}_[A-Z]{2}/", $this->ACCEPT_LANGUAGE))
