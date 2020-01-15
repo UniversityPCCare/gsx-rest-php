@@ -5,15 +5,15 @@ namespace UPCC;
 class GSXHandler {
 	private const INI_PATH = __DIR__ . "/../config/config.ini";
 	
-	private $CERT_PATH;
-	private $CERT_PASS;
+	private $REST_CERT_PATH;
+	private $REST_CERT_PASS;
+	private $REST_BASE_URL;
 	
-	private $BASE_URL;
 	private $SOLD_TO;
 	private $ACCEPT_LANGUAGE;
 	
-	private $gsxUserEmail;
-	private $gsxShipTo;
+	private $operatorEmail;
+	private $shipTo;
 	private $activationToken;
 	private $isActivationTokenConsumed;
 	private $authToken;
@@ -21,38 +21,93 @@ class GSXHandler {
 	private $authTokenLastUsedTs;
 	private $pdoHandler;
 	
-	public function __construct($gsxUserEmail, $gsxShipTo) {
-		$this->gsxUserEmail = $gsxUserEmail;
-		$this->gsxShipTo = $gsxShipTo;
+	private $SOAP_CERT_PATH;
+	private $SOAP_CERT_PASS;
+	private $SOAP_WSDL_URL;
+	private $SOAP_ENVIRONMENT;
+	private $SOAP_REGION;
+	private $SOAP_TIMEZONE;
+	private $SOAP_LANGUAGE;
+	
+	private $soapClient;
+	private $soapSessionId;
+	
+	public function __construct($operatorEmail, $shipTo, $options=null) {
+		$this->operatorEmail = $operatorEmail;
+		$this->shipTo = $shipTo;
 		
-		$config = parse_ini_file(self::INI_PATH);
+		if ($options == null or !is_array($options))
+			$config = parse_ini_file(self::INI_PATH);
+		else
+			$config = $options;
 		$this->pdoHandler = new PDOHandler($config["HOST"], $config["DB"], $config["USER"], $config["PASS"], $config["PORT"]);
-		$this->CERT_PATH = $config["CERT_PATH"];
-		$this->CERT_PASS = $config["CERT_PASS"];
-		$this->BASE_URL = $config["BASE_URL"];
 		$this->SOLD_TO = $config["SOLD_TO"];
+
+		$this->REST_CERT_PATH = $config["REST_CERT_PATH"];
+		$this->REST_CERT_PASS = $config["REST_CERT_PASS"];
+		$this->REST_BASE_URL = $config["REST_BASE_URL"];		
 		$this->ACCEPT_LANGUAGE = $config["ACCEPT_LANGUAGE"];
 		
-		date_default_timezone_set($config["TZ"]);
+		$this->SOAP_CERT_PATH = $config["SOAP_CERT_PATH"];
+		$this->SOAP_CERT_PASS = $config["SOAP_CERT_PASS"];
+		$this->SOAP_WSDL_URL = $config["SOAP_WSDL_URL"];
+		$this->SOAP_ENVIRONMENT = $config["SOAP_ENVIRONMENT"];
+		$this->SOAP_REGION = $config["SOAP_REGION"];
+		$this->SOAP_TIMEZONE = $config["SOAP_TIMEZONE"];
+		$this->SOAP_LANGUAGE = $config["SOAP_LANGUAGE"];
+		$this->initSoapClient();
+		
+		date_default_timezone_set($config["PHP_TZ"]);
 		
 		$this->testConfig();
 		$this->loadFromDB();
 	}
 	
+	private function initSoapClient() {
+		if (!isset($this->soapClient)) {
+			try {
+				$this->soapClient = new \SoapClient($this->SOAP_WSDL_URL, [
+					"trace" => true,
+					"exceptions" => true,
+					"local_cert" => $this->SOAP_CERT_PATH,
+					"passphrase" => $this->SOAP_CERT_PASS
+				]);
+				$authenticateResponse = $this->soapClient->Authenticate([
+					"AuthenticateRequest" => [
+						"userId" => $this->operatorEmail,
+						"serviceAccountNo" => $this->SOLD_TO,
+						"languageCode" => $this->SOAP_LANGUAGE,
+						"userTimeZone" => $this->SOAP_TIMEZONE
+					]
+				]);
+				if (property_exists($authenticateResponse, "AuthenticateResponse")) {
+					$this->soapSessionId = $authenticateResponse->AuthenticateResponse->userSessionId;
+					return true;
+				}
+			}
+			catch (\SoapFault $e) {
+				error_log($e->__toString());
+				return false;
+			}
+		}
+		else
+			return true;
+	}
+	
 	private function testConfig() {
 		if (!function_exists("curl_version"))
 			throw new \Exception("cURL is not enabled in your php.ini, it is required.");
-		if (!isset($this->CERT_PATH) or !file_exists($this->CERT_PATH))
+		if (!isset($this->REST_CERT_PATH) or !file_exists($this->REST_CERT_PATH))
 			throw new \Exception("Invalid certificate path set in config.ini!");
-		if (!isset($this->CERT_PASS) or strlen($this->CERT_PASS) === 0)
+		if (!isset($this->REST_CERT_PASS) or strlen($this->REST_CERT_PASS) === 0)
 			throw new \Exception("No certificate password set in config.ini!");
-		if (!isset($this->BASE_URL) or !preg_match("/https:\/\/partner-connect(?:-uat)?\.apple\.com\/gsx\/api/", $this->BASE_URL))
+		if (!isset($this->REST_BASE_URL) or !preg_match("/https:\/\/partner-connect(?:-uat)?\.apple\.com\/gsx\/api/", $this->REST_BASE_URL))
 			throw new \Exception("Invalid Base URL set in config.ini!");
 		if (!isset($this->SOLD_TO) or strlen($this->SOLD_TO) !== 10)
 			throw new \Exception("Invalid GSX Sold-To account number specified in config.ini!");
-		if (!isset($this->gsxShipTo) or strlen($this->gsxShipTo)  !== 10)
+		if (!isset($this->shipTo) or strlen($this->shipTo)  !== 10)
 			throw new \Exception("Invalid GSX Ship-To number provided!");
-		if (!isset($this->gsxUserEmail) or strlen($this->gsxUserEmail) === 0)
+		if (!isset($this->operatorEmail) or strlen($this->operatorEmail) === 0)
 			throw new \Exception("Invalid GSX User Email provided!");
 		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}_[A-Z]{2}/", $this->ACCEPT_LANGUAGE))
 			throw new \Exception("Invalid Accept-Language header specified in config.ini! (Default: en_US)");
@@ -70,26 +125,26 @@ class GSXHandler {
 	
 	private function fetchAuthToken() {
 		if ($this->activationToken == null)
-			throw new \Exception("Tried to retrieve Auth Token but user ($this->gsxUserEmail) does not have an Activation Token");
+			throw new \Exception("Tried to retrieve Auth Token but user ($this->operatorEmail) does not have an Activation Token");
 		elseif ($this->activationToken != null and $this->isActivationTokenConsumed and $this->authToken == null)
-			throw new \Exception("Tried to retrieve Auth Token but user's ($this->gsxUserEmail) Activation Token has already been consumed and no Auth Token is stored.");
+			throw new \Exception("Tried to retrieve Auth Token but user's ($this->operatorEmail) Activation Token has already been consumed and no Auth Token is stored.");
 		
 		$tokenToUse = $this->authToken == null ? $this->activationToken : $this->authToken;
 		$response = $this->curlSend("POST", "/authenticate/token",
-		["userAppleId"=>$this->gsxUserEmail,"authToken"=>$tokenToUse]);
+		["userAppleId"=>$this->operatorEmail,"authToken"=>$tokenToUse]);
 		if (property_exists($response, "authToken")) {
 			$this->setAuthToken($response->authToken);
 			return;
 		}
 		else
-			throw new \Exception("Tried to fetch Auth Token for user ($this->gsxUserEmail) but did not receive one from GSX\n" . var_export($response, true));
+			throw new \Exception("Tried to fetch Auth Token for user ($this->operatorEmail) but did not receive one from GSX\n" . var_export($response, true));
 	}
 	
 	private function setAuthToken($authToken) {
 		if (GSX::validateUuid($authToken)) {
 			$this->authToken = $authToken;
 			$this->isActivationTokenConsumed = true;
-			$this->pdoHandler->storeAuthToken($this->gsxUserEmail, $authToken);
+			$this->pdoHandler->storeAuthToken($this->operatorEmail, $authToken);
 			$this->loadFromDB();
 		}
 		else
@@ -97,12 +152,12 @@ class GSXHandler {
 	}
 	
 	private function setAuthTokenLastUsedTs() {
-		$this->pdoHandler->storeAuthTokenLastUsedTs($this->gsxUserEmail, time());
+		$this->pdoHandler->storeAuthTokenLastUsedTs($this->operatorEmail, time());
 		$this->loadFromDB();
 	}
 	
 	private function loadFromDB() {
-		$tokenDetails = $this->pdoHandler->fetchTokenDetails($this->gsxUserEmail);
+		$tokenDetails = $this->pdoHandler->fetchTokenDetails($this->operatorEmail);
 		if ($tokenDetails) {
 			$this->activationToken = $tokenDetails["activationToken"];
 			$this->isActivationTokenConsumed = (bool) $tokenDetails["isActivationTokenConsumed"];
@@ -123,13 +178,31 @@ class GSXHandler {
 		if (GSX::validateUuid($activationToken)) {
 			$this->activationToken = $activationToken;
 			$this->isActivationTokenConsumed = 0;
-			$this->pdoHandler->storeActivationToken($this->gsxUserEmail, $activationToken);
+			$this->pdoHandler->storeActivationToken($this->operatorEmail, $activationToken);
 			return true;
 		}
 		else
 			throw new \Exception("Tried to store an invalidly-formatted Activation Token!");
 	}
-
+	
+	public function soapSend($endpoint, $body, $requestName=null, $responseName=null) {		
+		try {
+			if (!isset($requestName))
+				$requestName = $endpoint . "Request";
+			if (!isset($responseName))
+				$responseName = $endpoint . "Response";
+			$body["userSession"] = ["userSessionId" => $this->soapSessionId];
+			$response = $this->soapClient->$endpoint([$requestName => $body]);
+			return $response->$responseName;
+		}
+		catch (\SoapFault $e) {
+			error_log($e->__toString());
+		}
+		catch (\Exception $e) {
+			error_log($e->__toString());
+		}
+	}
+	
 	private function curlSend($method, $endpoint, $body = null, $additionalHeaders = null) {
 		//first, make sure the Auth Token is still valid. If not, request a new one
 		if (!$this->isAuthTokenValid() and $endpoint != "/authenticate/token")
@@ -139,8 +212,8 @@ class GSXHandler {
 		$responseHeaders = array();
 		$headers = array(
 			"X-Apple-SoldTo: " . $this->SOLD_TO,
-			"X-Apple-ShipTo: " . $this->gsxShipTo,
-			"X-Operator-User-ID: " . $this->gsxUserEmail,
+			"X-Apple-ShipTo: " . $this->shipTo,
+			"X-Operator-User-ID: " . $this->operatorEmail,
 			"Content-Type: application/json",
 			"Accept: application/json",
 			"Accept-Language: " . $this->ACCEPT_LANGUAGE
@@ -158,13 +231,13 @@ class GSXHandler {
 
 		$default_charset = ini_get("default_charset"); #store current charset, because...
 		ini_set('default_charset', NULL); #cURL tries to add boundaries which GSX isn't expecting
-		$ch = curl_init($this->BASE_URL . $endpoint);
+		$ch = curl_init($this->REST_BASE_URL . $endpoint);
 		curl_setopt_array($ch, array(
 			CURLINFO_HEADER_OUT => true,
 			CURLOPT_HTTPHEADER => $headers,
 			CURLOPT_RETURNTRANSFER => 1,
-			CURLOPT_SSLCERT => $this->CERT_PATH,
-			CURLOPT_SSLCERTPASSWD => $this->CERT_PASS
+			CURLOPT_SSLCERT => $this->REST_CERT_PATH,
+			CURLOPT_SSLCERTPASSWD => $this->REST_CERT_PASS
 		));
 		if (is_array($body) and count($body))
 			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
@@ -199,9 +272,9 @@ class GSXHandler {
 			case 401: #Unauthorized
 			case 403: #Forbidden
 				if ($endpoint == "/authenticate/token")
-					throw new \Exception("Tried retrieving new Auth Token for user ($this->gsxUserEmail), received HTTP $httpCode. User must manually retrieve a new Activation Token from GSX to continue.");
+					throw new \Exception("Tried retrieving new Auth Token for user ($this->operatorEmail), received HTTP $httpCode. User must manually retrieve a new Activation Token from GSX to continue.");
 				else
-					throw new \Exception("User ($this->gsxUserEmail) is not authorized. HTTP $httpCode");
+					throw new \Exception("User ($this->operatorEmail) is not authorized. HTTP $httpCode");
 				break;
 			case false: #cURL error
 				throw new \Exception("Error sending request. cURL error $curlErrorNo. Error: $curlError");
@@ -216,7 +289,7 @@ class GSXHandler {
 		$curlErrorNo = curl_errno($ch);
 		$curlError = curl_error($ch);
 		$this->pdoHandler->storeLogEntry(
-			$this->gsxUserEmail,
+			$this->operatorEmail,
 			$endpoint,
 			$httpCode,
 			$curlErrorNo,
@@ -501,5 +574,17 @@ class GSXHandler {
 		if (is_array($body))
 			return $this->TechnicianLookup($body);
 		return false;
+	}
+
+	/* Functions below are for Legacy SOAP API */
+	
+	public function InvoiceLookup($body) {
+		return $this->soapSend("InvoiceDetailsLookup", [
+			"lookupRequestData" => $body
+		]);
+	}
+	
+	public function InvoiceLookupById($id) {
+		return $this->InvoiceLookup(["invoiceID"=>$id]);
 	}
 }

@@ -1,9 +1,23 @@
-[CERTIFICATE]
-CERT_PATH = "/path/to/certbundle.pem"
-CERT_PASS = "PASSWORD"
+[GENERAL]
+TZ = "America/New_York"
+STORAGE = "mysql"
+
+[REST API]
+REST_CERT_PATH = "/path/to/rest/certbundle.pem"
+REST_CERT_PASS = "PASSWORD"
+REST_BASE_URL = "https://partner-connect.apple.com/gsx/api"
+ACCEPT_LANGUAGE = "en_US"
+
+[SOAP API]
+SOAP_CERT_PATH = "/path/to/soap/certbundle.pem"
+SOAP_CERT_PASS = "PASSWORD"
+SOAP_WSDL_URL = ""
+SOAP_ENVIRONMENT = "it"
+SOAP_REGION = "am"
+SOAP_TIMEZONE = "EST"
+SOAP_LANGUAGE = "en"
 
 [GSX]
-BASE_URL = "https://partner-connect.apple.com/gsx/api"
 SOLD_TO = "0000123456"
 
 [DATABASE]
@@ -12,9 +26,3 @@ PORT = "3306"
 DB = "gsxrest"
 USER = "root"
 PASS = ""
-
-[HEADER]
-ACCEPT_LANGUAGE = "en_US"
-
-[OTHER]
-TZ = "America/New_York"
