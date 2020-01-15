@@ -83,32 +83,45 @@ After setting up `config\config.ini`:
 
 Implemented Endpoints
 ===
+All REST API endpoints are implemented in at least a basic capacity, meaning each endpoint has at least one corresponding
+function that takes an array as input and returns the response from the REST API, or NULL on no/invalid response. This basic
+function does no error checking or data validation, so it is assumed that the array passed to it is in a format that the REST
+API will accept, and that the values are valid. The array should be formatted such that, when passed through `json_encode`, it 
+will result in a JSON Request Body formatted according to that endpoint's documentation in eServiceCentral.  
+Endpoints that accept `GET` requests instead of `POST` will not accept a JSON body, but instead will accept whatever query
+parameters the endpoint would expect. Some `POST` endpoints accept query parameters in addition to a JSON request body.
 
-Authenticate
-- [x] `/authenticate/check`
-- [x] `/authenticate/token`
-- [ ] `/authenticate/end-session`
+Endpoints with helper functions
+==
+
+The following endpoints have additional functions that help shape the request body. Some of the more complex endpoints (such as 
+Consignment Validation Requests) have an associated helper class that will help you build a valid request body.
 
 Repair
 - [x] `/repair/summary`
-- [x] `/repair/details`
+  - `RepairSummaryByIds($ids)`
+  - `RepairSummaryById($id)`
 - [x] `/repair/eligibility`
 - [ ] `/repair/update`
-- [x] `/repair/audit`
 - [ ] `/repair/product/serializer`
+  - `RepairEligibilityByDeviceId($id)`
 - [x] `/repair/questions`
+  - `QuestionsLookupByComponentIssue($id, $componentCode, $issueCode, $reportedBy)`
 - [ ] `/repair/loaner/return`
-- [x] `/repair/create`
+- [ ] `/repair/create`
 - [x] `/repair/product/componentissue`
+  - `ComponentIssueLookupByCode($code)`
+  - `ComponentIssueLookupByCodeAndId($code, $id)`
+  - `ComponentIssueLookupById($id)`
 - [x] `/repair/product/details`
-- [ ] `/repair/product/serializer/lookup`
+  - `ProductDetails($id)`
+- [x] `/repair/product/serializer/lookup`
+  - `ProductSerializerLookupByCode($languageCode)`
+  - `ProductSerializerLookupById($id, $languageCode)`
 
 Diagnostics
-- [x] `/diagnostics/suites`
-- [x] `/diagnostics/initiate-test`
 - [x] `/diagnostics/lookup`
-- [ ] `/diagnostics/customer-report-url`
-- [x] `/diagnostics/status`
+  - `DiagnosticsLookupByDeviceId($id, $maximumResults=null)`
 
 Consignment
 - [ ] `/consignment/validate`
@@ -116,18 +129,26 @@ Consignment
 - [ ] `/consignment/order/shipment`
 - [ ] `/consignment/order/lookup`
 - [x] `/consignment/delivery/lookup`
+  - `ConsignmentDeliveryLookupByStatus($code)`
 - [ ] `/consignment/order/submit`
 
 Content
-- [x] `/content/article`
 - [x] `/content/article/lookup`
+  - `ArticleIdLookupByDeviceId($id, $pageSize=null, $pageNumber=null)`
 
 Other
-- [ ] `/document-download` (POST)
-- [ ] `/document-download` (GET)
-- [ ] `/attachment/upload-access`
+- [x] `/document-download` (POST)
+  - `DownloadConsignmentProforma($shipmentNumber, $shipTo)`
+  - `DownloadConsignmentPackingList($shipmentNumber, $shipTo)`
+  - `DownloadDepotShipper($id)`
+- [x] `/attachment/upload-access`
+  - `AttachmentUploadAccessMultiple($id, $attachments)`
+  - `AttachmentUploadAccessSingle($id, $sizeInBytes, $fileName)`
 - [x] `/parts/summary`
+  - `PartsSummaryByDeviceId($id)`
+  - `PartsSummaryByComponentIssue($id, $componentCode, $issueCode)`
 - [x] `/technician/lookup`
+  - `TechnicianLookupByName($firstName, $lastName, $shipTo=null)`
 
 GSX Client Certificate and Configuration
 ===

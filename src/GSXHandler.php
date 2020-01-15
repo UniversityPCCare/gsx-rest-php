@@ -21,6 +21,8 @@ class GSXHandler {
 	private $authTokenLastUsedTs;
 	private $pdoHandler;
 	
+	private $lastRestResponseHeaders;
+	
 	private $SOAP_CERT_PATH;
 	private $SOAP_CERT_PASS;
 	private $SOAP_WSDL_URL;
@@ -210,6 +212,7 @@ class GSXHandler {
 		
 		//then, start by setting headers array
 		$responseHeaders = array();
+		$this->lastRestResponseHeaders = null;
 		$headers = array(
 			"X-Apple-SoldTo: " . $this->SOLD_TO,
 			"X-Apple-ShipTo: " . $this->shipTo,
@@ -218,8 +221,14 @@ class GSXHandler {
 			"Accept: application/json",
 			"Accept-Language: " . $this->ACCEPT_LANGUAGE
 		);
-		if (is_array($additionalHeaders) and count($additionalHeaders))
+		if (is_array($additionalHeaders) and count($additionalHeaders)) {
+			//if the calling function specified a custom "Accept" header, unset the default "Accept: application/json" header
+			foreach ($additionalHeaders as $additionalHeader) {
+				if (strpos($additionalHeader, "Accept:") === 0)
+					unset($headers[4]); 
+			}
 			$headers = array_merge($headers, $additionalHeaders);
+		}
 		if (is_array($body) and count($body))
 			$headers[] = "Content-Length: " . strlen(json_encode($body));
 		if ($this->authToken)
@@ -256,6 +265,7 @@ class GSXHandler {
 		
 		//done building curl object, send it
 		$response = curl_exec($ch);
+		$this->lastRestResponseHeaders = $responseHeaders;
 		ini_set("default_charset", $default_charset); #return this back to what it was
 		$this->logCurlRequest($ch, $endpoint, $headers, $body, $responseHeaders, $response);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -301,12 +311,22 @@ class GSXHandler {
 		);
 	}
 	
+	public function getLastRestResponseHeaders() {
+		return $this->lastRestResponseHeaders;
+	}
+	
 	public function testAuthentication() {
 		if ($this->curlSend("GET", "/authenticate/check"))
 			return true;
 		return false;
 	}
 	
+	public function endSession() {
+		return $this->curlSend("POST", "/authenticate/end-session", [
+			"userAppleId" => $this->operatorEmail,
+			"authToken" => $this->authToken
+		]);
+	}
 	
 	public function ProductDetails($id) {
 		$id = trim($id);
@@ -362,7 +382,9 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function RepairUpdate($body) {}
+	public function RepairUpdate($body) {
+		return $this->curlSend("POST", "/repair/update", $body);
+	}
 	
 	public function RepairAudit($id) {
 		$id = trim($id);
@@ -371,7 +393,9 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function ProductSerializer($body) {}
+	public function ProductSerializer($body) {
+		return $this->curlSend("POST", "/repair/product/serializer", $body);
+	}
 	
 	public function QuestionsLookup($body) {
 		return $this->curlSend("POST", "/repair/questions", $body);
@@ -401,15 +425,27 @@ class GSXHandler {
 		}		
 	}
 	
-	public function LoanerReturn($body) {}
+	public function LoanerReturn($body) {
+		return $this->curlSend("POST", "/repair/loaner/return", $body);
+	}
 	
-	public function CreateRepair($body) {}
+	public function CreateRepair($body) {
+		return $this->curlSend("POST", "/repair/create", $body);
+	}
 	
 	public function ComponentIssueLookup($body) {
 		return $this->curlSend("POST", "/repair/product/componentissue", $body);
 	}
 	
-	public function ComponentIssueLookupByCode($code) {}
+	public function ComponentIssueLookupByCode($code) {
+		if (GSX::isValidComponentCode($code))
+			return $this->ComponentIssueLookup(["componentCode" => $code]);
+	}
+	
+	public function ComponentIssueLookupByCodeAndId($code, $id) {
+		if (GSX::isValidComponentCode($code) and GSX::isValidDeviceIdentifier($id))
+			return $this->ComponentIssueLookup(["componentCode" => $code, "device" => ["id"=>$id]]);
+	}
 	
 	public function ComponentIssueLookupById($id) {
 		$id = trim($id);
@@ -418,7 +454,22 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function ProductSerializerLookup($body) {}
+	public function ProductSerializerLookup($body) {
+		return $this->curlSend("POST", "/repair/product/serializer/lookup", $body);
+	}
+	
+	public function ProductSerializerLookupByCode($languageCode) {
+		return $this->ProductSerializerLookup([
+			"languageCode" => $languageCode
+		]);
+	}
+	
+	public function ProductSerializerLookupById($id, $languageCode) {
+		if (GSX::isValidDeviceIdentifier($id))
+			return $this->ProductSerializerLookup([
+				"languageCode" => $languageCode,
+				"device"=>["id"=>$id]]);
+	}
 	
 	public function DiagnosticsSuites($id) {
 		$id = trim($id);
@@ -456,7 +507,10 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function DiagnosticsCustomerReportUrl($eventNumber) {}
+	public function DiagnosticsCustomerReportUrl($eventNumber) {
+		if (GSX::isValidDiagnosticEventNumber($eventNumber))
+			return $this->curlSend("GET", "/diagnostics/customer-report-url?eventNumber=$eventNumber");
+	}
 	
 	public function DiagnosticsStatus($id) {
 		$id = trim($id);
@@ -465,15 +519,26 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function ConsignmentValidate($body) {}
+	public function ConsignmentValidate($body) {
+		return $this->curlSend("POST", "/consignment/validate", $body);
+	}
 	
 	public function AcknowledgeConsignmentDelivery($body) {
 		return $this->curlSend("POST", "/consignment/delivery/acknowledge", $body);
 	}
 	
-	public function ShipConsignmentDecreaseOrder($body) {}
+	public function ShipConsignmentDecreaseOrder($body) {
+		return $this->curlSend("POST", "/consignment/order/shipment", $body);
+	}
 	
-	public function ConsignmentOrderLookup($body) {}
+	public function ConsignmentOrderLookup($body, $pageSize=null, $pageNumber=null) {
+		$endpoint = "/consignment/order/lookup?";
+		if (isset($pageSize) and $pageSize > 0 and $pageSize <= 50)
+			$endpoint .= "pageSize=$pageSize&";
+		if (isset($pageNumber) and $pageNumber > 0)
+			$endpoint .= "pageNumber=$pageNumber";
+		return $this->curlSend("POST", $endpoint, $body);
+	}
 	
 	public function ConsignmentDeliveryLookup($body) {
 		return $this->curlSend("POST", "/consignment/delivery/lookup", $body);
@@ -486,7 +551,9 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function SubmitConsignmentDecreaseOrder($body) {}
+	public function SubmitConsignmentDecreaseOrder($body) {
+		return $this->curlSend("POST", "/consignment/order/submit", $body);
+	}
 	
 	public function ArticleContentLookup($id) {
 		$id = trim($id);
@@ -511,11 +578,80 @@ class GSXHandler {
 		return false;
 	}
 	
-	public function DownloadDocumentPost($body) {}
+	/*
+	** The following notice applies to all following "DownloadDocument" functions:
+	** Returns the application/octet-stream of a PDF file
+	** Recommended to set the Content-Type and Content-Disposition headers when
+	** "displaying" (echoing) this stream so it will download as an
+	** appropriately-named PDF
+	*/
+	public function DownloadDocumentPost($body, $documentType) {
+		return $this->curlSend("POST", "/document-download?documentType=$documentType", 
+		$body,
+		["Accept: application/json,application/octet-stream"]);
+	}
 	
-	public function DownloadDocumentGet($documentType) {}
+	public function DownloadConsignmentProforma($shipmentNumber, $shipTo) {
+		if (GSX::isValidShipmentNumber($shipmentNumber) and GSX::isValidShipTo($shipTo))
+			return $this->DownloadDocumentPost([
+				"identifiers" => [
+					"shipmentNumber" => $shipmentNumber,
+					"shipTo" => $shipTo
+				]],
+				"consignmentProforma");
+	}
 	
-	public function AttachmentUploadAccess($attachments) {}
+	public function DownloadConsignmentPackingList($shipmentNumber, $shipTo) {
+		if (GSX::isValidShipmentNumber($shipmentNumber) and GSX::isValidShipTo($shipTo))
+			return $this->DownloadDocumentPost([
+				"identifiers" => [
+					"shipmentNumber" => $shipmentNumber,
+					"shipTo" => $shipTo
+				]],
+				"consignmentPackingList");
+	}
+	
+	public function DownloadDepotShipper($id) {
+		if (GSX::isValidRepairIdentifier($id))
+			return $this->DownloadDocumentPost([
+				"identifiers" => [
+					"repairId" => $id
+				]],
+				"depotShipper");
+	}
+	
+	public function DownloadDocumentGet($documentType) {
+		$documentType = urlencode($documentType);
+		return $this->curlSend("GET", "/document-download?documentType=$documentType", null, ["Accept: application/json,application/octet-stream"]);
+	}
+	
+	public function DownloadWarrantyClaim() {
+		return $this->DownloadDocumentGet("submitWarrantyClaim");
+	}
+	
+	public function AttachmentUploadAccess($body) {
+		return $this->curlSend("POST", "/attachment/upload-access", $body);
+	}
+	
+	public function AttachmentUploadAccessMultiple($id, $attachments) {
+		$includedAttachments = [];
+		foreach ($attachments as $attachment) {
+			if ($attachment["sizeInBytes"] >= 1
+				and $attachment["sizeInBytes"] <= 5242880
+				and GSX::isValidAttachmentName($attachment["name"]))
+				$includedAttachments[] = $attachment;
+		}
+		if (GSX::isValidDeviceIdentifier($id) and count($includedAttachments) > 0)
+			return $this->AttachmentUploadAccess([
+				"attachments" => $includedAttachments,
+				"device" => ["id"=>$id]
+			]);
+	}
+	
+	public function AttachmentUploadAccessSingle($id, $sizeInBytes, $fileName) {
+		return $this->AttachmentUploadAccessMultiple($id, [
+			["sizeInBytes" => $sizeInBytes, "name" => $fileName]]);
+	}
 	
 	public function PartsSummary($body) {
 		return $this->curlSend("POST", "/parts/summary", $body);
@@ -548,7 +684,9 @@ class GSXHandler {
 		}
 	}
 	
-	public function TechnicianLookup($body) {}
+	public function TechnicianLookup($body) {
+		return $this->curlSend("POST", "/technician/lookup", $body);
+	}
 	
 	public function TechnicianLookupByName($firstName, $lastName, $shipTo=null) {
 		$firstName = trim($firstName);

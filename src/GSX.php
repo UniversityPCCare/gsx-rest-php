@@ -100,6 +100,22 @@ final class GSX {
 		#ENUM {"TECH", "CUST"}
 	}
 	
+	public static function isValidDiagnosticEventNumber($eventNumber) {
+		return preg_match("/^[0-9a-zA-Z]{1,40}$/", $eventNumber);
+		#this is the regex provided by Apple
+	}
+	
+	public static function isValidShipmentNumber($shipmentNumber) {
+		return preg_match("/^[0-9]{1,8}$/", $shipmentNumber);
+		#this is the regex provided by Apple
+	}
+	
+	public static function isValidAttachmentName($fileName) {
+		return (strlen($fileName) > 3
+				and strlen($fileName) <= 120 
+				and preg_match("/[^\s]+(\.(txt|doc|docx|csv|pdf|jpg|png|jpeg|zip))$/i", $fileName));
+	}
+	
 	public static function isValidConsignmentDeliveryStatus($code) {
 		switch ($code) {
 			case self::CONSIGNMENT_DELIVERY_CODE_OPEN:
