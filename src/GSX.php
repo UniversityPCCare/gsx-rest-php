@@ -22,6 +22,9 @@ final class GSX {
 	const ARTICLE_DOWNLOADS = "DOWNLOADS";
 	const ARTICLE_HOWTO = "HOWTO_ARTICLES";
 	
+	const ARTICLE_ACKNOWLEDGEMENT_READ = "READ";
+	const ARTICLE_ACKNOWLEDGEMENT_UNREAD = "UNREAD";
+	
 	const REPAIR_TYPE_SVNR = "SVNR"; #Service Non-Repair
 	const REPAIR_TYPE_CRBR = "CRBR"; #Carry-in Return Before Replace
 	const REPAIR_TYPE_DION = "DION"; #Onsite Service Direct
@@ -114,6 +117,20 @@ final class GSX {
 		return (strlen($fileName) > 3
 				and strlen($fileName) <= 120 
 				and preg_match("/[^\s]+(\.(txt|doc|docx|csv|pdf|jpg|png|jpeg|zip))$/i", $fileName));
+	}
+	
+	public static function isValidArticleId($articleId) {
+		return strlen($articleId) <= 20;
+		#Apple does not provide Regex, just a character limit
+	}
+	
+	public static function isValidArticleAcknowledgementType($type) {
+		switch ($type) {
+			case self::ARTICLE_ACKNOWLEDGEMENT_READ:
+			case self::ARTICLE_ACKNOWLEDGEMENT_UNREAD:
+				return true;
+		}
+		return false;
 	}
 	
 	public static function isValidConsignmentDeliveryStatus($code) {

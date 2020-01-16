@@ -557,7 +557,7 @@ class GSXHandler {
 	
 	public function ArticleContentLookup($id) {
 		$id = trim($id);
-		if (is_string($id) and strlen($id) <= 20) #Apple documentation does not provide regex or a clear definition for this
+		if (is_string($id) and GSX::isValidArticleId($id))
 			return $this->curlSend("GET", "/content/article?articleId=$id");
 		return false;
 	}
@@ -577,7 +577,11 @@ class GSXHandler {
 			return $this->ArticleIdLookup(["device"=>["id"=>$id]], $pageSize, $pageNumber);
 		return false;
 	}
-	
+
+	public function ArticleLookupByType($articleType) {
+		if (GSX::isValidArticleType($articleType))
+			return $this->ArticleIdLookup(["articleType" => $articleType]);
+	}
 	/*
 	** The following notice applies to all following "DownloadDocument" functions:
 	** Returns the application/octet-stream of a PDF file
@@ -725,4 +729,26 @@ class GSXHandler {
 	public function InvoiceLookupById($id) {
 		return $this->InvoiceLookup(["invoiceID"=>$id]);
 	}
+	
+	public function AcknowledgeCommunication($body) {
+		return $this->soapSend("AcknowledgeCommunication", [
+			"communicationRequest" => $body
+		]);
+	}
+	
+	/*
+	** If an article ID is a valid SERVICE_NEWS article and the acknowledgement type is valid,
+	** this SOAP function will work properly to set the acknowledgement status. 
+	** May not be able to acknowledge SERVICE_NEWS articles for regions outside of your own,
+	** although calls to the REST endpoint /content/article/lookup has no way to filter these
+	** out upon request and the region of an article is not indicated anywhere in its response.
+	*/
+	public function AcknowledgeCommunicationById($articleId, $type) {
+		if (GSX::isValidArticleId($articleId) and GSX::isValidArticleAcknowledgementType($type))
+			return $this->AcknowledgeCommunication(["acknowledgement" => [[
+				"articleID" => $articleId,
+				"acknowledgeType" => $type
+			]]]);
+	}
+	
 }
