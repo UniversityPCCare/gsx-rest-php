@@ -307,7 +307,7 @@ class GSXHandler {
 			json_encode($headers),
 			((is_array($body) and count($body)) ? json_encode($body) : null),
 			json_encode($responseHeaders),
-			json_encode($response)
+			is_string($response) ? $response : json_encode($response)
 		);
 	}
 	
