@@ -7,7 +7,9 @@
 	"require": {
 		"php": "^7.0",
 		"ext-mysqli": "*",
-		"ext-pdo_mysql": "*"
+		"ext-pdo_mysql": "*",
+		"ext-curl": "*",
+		"ext-json": "*"
 	},
 	"autoload": {
 		"psr-4": {"UPCC\\": "src/"}
