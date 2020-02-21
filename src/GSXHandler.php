@@ -540,14 +540,34 @@ class GSXHandler {
 		return $this->curlSend("POST", $endpoint, $body);
 	}
 	
-	public function ConsignmentDeliveryLookup($body) {
-		return $this->curlSend("POST", "/consignment/delivery/lookup", $body);
+	public function ConsignmentDeliveryLookup($body, $pageNumber=0) {
+		$endpoint = "/consignment/delivery/lookup";
+		if ($pageNumber > 0)
+			$endpoint .= "?pageNumber=$pageNumber";
+		return $this->curlSend("POST", $endpoint, $body);
 	}
 	
-	public function ConsignmentDeliveryLookupByStatus($code) {
+	public function ConsignmentDeliveryLookupByStatus($code, $pageNumber=0) {
 		$code = trim($code);
 		if (GSX::isValidConsignmentDeliveryStatus($code))
-			return $this->ConsignmentDeliveryLookup(["deliveryStatusGroupCode"=>$code]);
+			return $this->ConsignmentDeliveryLookup(["deliveryStatusGroupCode"=>$code], $pageNumber);
+		return false;
+	}
+	
+	public function ConsignmentDeliveryLookupByDate(\DateTime $startDate, \DateTime $endDate = null, $statusCode=GSX::CONSIGNMENT_DELIVERY_CODE_ALL, $pageNumber=0) {
+		$startDateFormatted = $startDate->format(DATE_ATOM);
+		if ($endDate)
+			$endDateFormatted = $endDate->format(DATE_ATOM);
+		else
+			$endDateFormatted = $startDateFormatted;
+		
+		if ($startDateFormatted and $endDateFormatted and GSX::isValidConsignmentDeliveryStatus($statusCode)) {
+			return $this->ConsignmentDeliveryLookup([
+				"createdFromDate" => $startDateFormatted,
+				"createdToDate" => $endDateFormatted,
+				"deliveryStatusGroupCode" => GSX::CONSIGNMENT_DELIVERY_CODE_ALL
+			], $pageNumber);
+		}
 		return false;
 	}
 	
