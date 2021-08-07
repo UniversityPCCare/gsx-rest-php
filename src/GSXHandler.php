@@ -119,6 +119,7 @@ class GSXHandler {
 		$lastUsedThreshold = "30 minute";
 		$createdThreshold = "12 hour";
 		
+		if ($this->activationToken != null and $this->isActivationTokenConsumed == 0) return false;
 		if ($this->authToken == null or $this->authTokenCreatedTs == null) return false;
 		elseif ($this->authTokenCreatedTs != null and $this->authTokenLastUsedTs == null and strtotime("+$createdThreshold", strtotime($this->authTokenCreatedTs)) < time()) return false;
 		elseif ($this->authTokenLastUsedTs != null and strtotime("+$lastUsedThreshold", strtotime($this->authTokenLastUsedTs)) < time()) return false;
@@ -131,7 +132,7 @@ class GSXHandler {
 		elseif ($this->activationToken != null and $this->isActivationTokenConsumed and $this->authToken == null)
 			throw new \Exception("Tried to retrieve Auth Token but user's ($this->operatorEmail) Activation Token has already been consumed and no Auth Token is stored.");
 		
-		$tokenToUse = $this->authToken == null ? $this->activationToken : $this->authToken;
+		$tokenToUse = (($this->authToken == null or !$this->isActivationTokenConsumed) ? $this->activationToken : $this->authToken);
 		$response = $this->curlSend("POST", "/authenticate/token",
 		["userAppleId"=>$this->operatorEmail,"authToken"=>$tokenToUse]);
 		if (property_exists($response, "authToken")) {

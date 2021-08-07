@@ -34,7 +34,7 @@ class PDOHandler {
 	private static function createTableIfNotExists($link, $db) {
 		$tableExists = false !== mysqli_query($link, "SELECT 1 FROM token LIMIT 1");
 		if (!$tableExists) {
-			$sql = file_get_contents("../config/schema.sql");
+			$sql = file_get_contents(__DIR__ . "/../config/schema.sql");
 			$tableCreated = mysqli_query($link, $sql);
 			if (!$tableCreated)
 				throw new \Exception("Could not create table");
