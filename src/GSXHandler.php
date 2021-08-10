@@ -8,7 +8,8 @@ class GSXHandler {
 	private $REST_CERT_PATH;
 	private $REST_CERT_PASS;
 	private $REST_BASE_URL;
-	private $REST_AUTH_URL;
+	private $REST_AUTH_PATH;
+	private $REST_GSX_PATH;
 	private $API_VERSION;
 	
 	private $SOLD_TO;
@@ -50,7 +51,8 @@ class GSXHandler {
 		$this->REST_CERT_PATH = $config["REST_CERT_PATH"];
 		$this->REST_CERT_PASS = $config["REST_CERT_PASS"];
 		$this->REST_BASE_URL = $config["REST_BASE_URL"];
-		$this->REST_AUTH_URL = $config["REST_AUTH_URL"];
+		$this->REST_AUTH_PATH = $config["REST_AUTH_PATH"];
+		$this->REST_GSX_PATH = $config["REST_GSX_PATH"];
 		$this->ACCEPT_LANGUAGE = $config["ACCEPT_LANGUAGE"];
 		$this->API_VERSION = $config["API_VERSION"];
 		
@@ -107,10 +109,12 @@ class GSXHandler {
 			throw new \Exception("Invalid certificate path set in config.ini!");
 		if (!isset($this->REST_CERT_PASS) or strlen($this->REST_CERT_PASS) === 0)
 			throw new \Exception("No certificate password set in config.ini!");
-		if (!isset($this->REST_BASE_URL) or !preg_match("/https:\/\/api-partner-connect(?:-uat)?\.apple\.com\/gsx\/api/", $this->REST_BASE_URL))
+		if (!isset($this->REST_BASE_URL) or strlen($this->REST_BASE_URL) == 0)
 			throw new \Exception("Invalid REST Base URL set in config.ini!");
-		if (!isset($this->REST_AUTH_URL) or !preg_match("/https:\/\/api-partner-connect(?:-uat)?\.apple\.com\/api/", $this->REST_AUTH_URL))
-			throw new \Exception("Invalid REST Auth URL set in config.ini!");
+		if (!isset($this->REST_AUTH_PATH) or strlen($this->REST_AUTH_PATH) == 0)
+			throw new \Exception("Invalid REST Auth API path set in config.ini!");
+		if (!isset($this->REST_GSX_PATH) or strlen($this->REST_GSX_PATH) == 0)
+			throw new \Exception("Invalid REST GSX API path set in config.ini!");
 		if (!isset($this->SOLD_TO) or strlen($this->SOLD_TO) !== 10)
 			throw new \Exception("Invalid GSX Sold-To account number specified in config.ini!");
 		if (!isset($this->shipTo) or strlen($this->shipTo)  !== 10)
@@ -214,9 +218,9 @@ class GSXHandler {
 	
 	private function curlSend($method, $endpoint, $body = null, $additionalHeaders = null) {
 		if (strstr($endpoint, "authenticate"))
-			$full_base_url = $this->REST_AUTH_URL;
+			$full_base_url = $this->REST_BASE_URL . $this->REST_AUTH_PATH;
 		else
-			$full_base_url = $this->REST_BASE_URL;
+			$full_base_url = $this->REST_BASE_URL . $this->REST_GSX_PATH;
 
 		//first, make sure the Auth Token is still valid. If not, request a new one
 		if (!$this->isAuthTokenValid() and $endpoint != "/authenticate/token")

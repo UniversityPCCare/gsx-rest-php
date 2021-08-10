@@ -27,6 +27,17 @@ variables within. This is only necessary if you choose to run `tests/test.php` t
 - Upon first run, the database will be created for you (if you hadn't made it already), as well as the
 tables within.
 
+Upgrading to v2 REST API from v1
+===
+Apple made changes to the authentication API for v2 of their API. All authentication functions must go through `/api`, 
+whereas all GSX API requests must go through `/gsx/api`. Additionally, there is a new Base URL.
+
+If you are upgrading from v1, make the following changes to `config.ini`:
+- Change variable `REST_BASE_URL` to the appropriate Base URL as found in eServiceCentral. The Base URL changed in v2.
+- Add variable `REST_AUTH_PATH` with value `/api`
+- Add variable `REST_GSX_PATH` with value `/gsx/api`
+- Add variable `API_VERSION` with value `v2`. Must be typed exactly as it is here.
+
 Configuration
 =====
 
@@ -52,8 +63,8 @@ for each API. Keep this in a safe place, not in your web directory!
 - `REST_BASE_URL`: The base URL used for making calls to the REST API, found in eServiceCentral
 - `ACCEPT_LANGUAGE`: The `Accept-Language` header. Default is en_US. Other options are available, found in eServiceCentral
 
-Until Apple completely replaces the SOAP API, this library will implement all legacy SOAP functions as well.
-The SOAP API requires the following parameters:
+The SOAP API is deprecated and will be removed from this library. ~~Until Apple completely replaces the SOAP API, this library will implement all legacy SOAP functions as well.
+The SOAP API requires the following parameters~~:
 
 - `SOAP_CERT_PATH`: Path to the certificate bundle in `.pem` format. Like `REST_CERT_PATH`, this is the "chain.pem"
 certificate provided by Apple, with your private key appended. Note that you must request separate certificates, one

@@ -5,7 +5,10 @@ STORAGE = "mysql"
 [REST API]
 REST_CERT_PATH = "/path/to/rest/certbundle.pem"
 REST_CERT_PASS = "PASSWORD"
-REST_BASE_URL = "https://partner-connect.apple.com/gsx/api"
+REST_BASE_URL = "https://api-partner-connect.apple.com"
+REST_AUTH_PATH = "/api"
+REST_GSX_PATH = "/gsx/api";
+API_VERSION = "v2"
 ACCEPT_LANGUAGE = "en_US"
 
 [SOAP API]
