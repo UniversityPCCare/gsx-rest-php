@@ -8,6 +8,8 @@ class GSXHandler {
 	private $REST_CERT_PATH;
 	private $REST_CERT_PASS;
 	private $REST_BASE_URL;
+	private $REST_AUTH_URL;
+	private $API_VERSION;
 	
 	private $SOLD_TO;
 	private $ACCEPT_LANGUAGE;
@@ -47,8 +49,10 @@ class GSXHandler {
 
 		$this->REST_CERT_PATH = $config["REST_CERT_PATH"];
 		$this->REST_CERT_PASS = $config["REST_CERT_PASS"];
-		$this->REST_BASE_URL = $config["REST_BASE_URL"];		
+		$this->REST_BASE_URL = $config["REST_BASE_URL"];
+		$this->REST_AUTH_URL = $config["REST_AUTH_URL"];
 		$this->ACCEPT_LANGUAGE = $config["ACCEPT_LANGUAGE"];
+		$this->API_VERSION = $config["API_VERSION"];
 		
 		$this->SOAP_CERT_PATH = $config["SOAP_CERT_PATH"];
 		$this->SOAP_CERT_PASS = $config["SOAP_CERT_PASS"];
@@ -57,7 +61,7 @@ class GSXHandler {
 		$this->SOAP_REGION = $config["SOAP_REGION"];
 		$this->SOAP_TIMEZONE = $config["SOAP_TIMEZONE"];
 		$this->SOAP_LANGUAGE = $config["SOAP_LANGUAGE"];
-		$this->initSoapClient();
+		//$this->initSoapClient();
 		
 		date_default_timezone_set($config["PHP_TZ"]);
 		
@@ -65,7 +69,7 @@ class GSXHandler {
 		$this->loadFromDB();
 	}
 	
-	private function initSoapClient() {
+/*	private function initSoapClient() {
 		if (!isset($this->soapClient)) {
 			try {
 				$this->soapClient = new \SoapClient($this->SOAP_WSDL_URL, [
@@ -94,7 +98,7 @@ class GSXHandler {
 		}
 		else
 			return true;
-	}
+	}*/
 	
 	private function testConfig() {
 		if (!function_exists("curl_version"))
@@ -103,8 +107,10 @@ class GSXHandler {
 			throw new \Exception("Invalid certificate path set in config.ini!");
 		if (!isset($this->REST_CERT_PASS) or strlen($this->REST_CERT_PASS) === 0)
 			throw new \Exception("No certificate password set in config.ini!");
-		if (!isset($this->REST_BASE_URL) or !preg_match("/https:\/\/partner-connect(?:-uat)?\.apple\.com\/gsx\/api/", $this->REST_BASE_URL))
-			throw new \Exception("Invalid Base URL set in config.ini!");
+		if (!isset($this->REST_BASE_URL) or !preg_match("/https:\/\/api-partner-connect(?:-uat)?\.apple\.com\/gsx\/api/", $this->REST_BASE_URL))
+			throw new \Exception("Invalid REST Base URL set in config.ini!");
+		if (!isset($this->REST_AUTH_URL) or !preg_match("/https:\/\/api-partner-connect(?:-uat)?\.apple\.com\/api/", $this->REST_AUTH_URL))
+			throw new \Exception("Invalid REST Auth URL set in config.ini!");
 		if (!isset($this->SOLD_TO) or strlen($this->SOLD_TO) !== 10)
 			throw new \Exception("Invalid GSX Sold-To account number specified in config.ini!");
 		if (!isset($this->shipTo) or strlen($this->shipTo)  !== 10)
@@ -207,6 +213,11 @@ class GSXHandler {
 	}
 	
 	private function curlSend($method, $endpoint, $body = null, $additionalHeaders = null) {
+		if (strstr($endpoint, "authenticate"))
+			$full_base_url = $this->REST_AUTH_URL;
+		else
+			$full_base_url = $this->REST_BASE_URL;
+
 		//first, make sure the Auth Token is still valid. If not, request a new one
 		if (!$this->isAuthTokenValid() and $endpoint != "/authenticate/token")
 			$this->fetchAuthToken();
@@ -218,6 +229,7 @@ class GSXHandler {
 			"X-Apple-SoldTo: " . $this->SOLD_TO,
 			"X-Apple-ShipTo: " . $this->shipTo,
 			"X-Operator-User-ID: " . $this->operatorEmail,
+			"X-Apple-Service-Version: " . $this->API_VERSION,
 			"Content-Type: application/json",
 			"Accept: application/json",
 			"Accept-Language: " . $this->ACCEPT_LANGUAGE
@@ -241,7 +253,7 @@ class GSXHandler {
 
 		$default_charset = ini_get("default_charset"); #store current charset, because...
 		ini_set('default_charset', NULL); #cURL tries to add boundaries which GSX isn't expecting
-		$ch = curl_init($this->REST_BASE_URL . $endpoint);
+		$ch = curl_init($full_base_url . $endpoint);
 		curl_setopt_array($ch, array(
 			CURLINFO_HEADER_OUT => true,
 			CURLOPT_HTTPHEADER => $headers,
