@@ -600,18 +600,34 @@ class GSXHandler {
 	}
 	
 	public function ArticleIdLookup($body, $pageSize=null, $pageNumber=null) {
-		$endpoint = "/content/article/lookup?";
-		if (isset($pageSize) and $pageSize > 0 and $pageSize <= 100)
-			$endpoint.= "pageSize=$pageSize&";
+		$endpoint = "/content/article/lookup";
+
+		$pagination = [];
+		if (isset($pageSize) and $pageSize > 0)
+			$pagination["recordsPerPage"] = $pageSize;
 		if (isset($pageNumber) and $pageNumber > 0)
-			$endpoint .= "pageNumber=$pageNumber";
+			$pagination["currentPage"] = $pageNumber;
+		if (count($pagination) > 0)
+			$body["pagination"] = $pagination;
+
 		return $this->curlSend("POST", $endpoint, $body);
 	}
 	
 	public function ArticleIdLookupByDeviceId($id, $pageSize=null, $pageNumber=null) {
 		$id = trim($id);
-		if (GSX::isValidDeviceIdentifier($id))
-			return $this->ArticleIdLookup(["device"=>["id"=>$id]], $pageSize, $pageNumber);
+		if (GSX::isValidDeviceIdentifier($id)) {
+			$body = [
+				"filter" => [
+					[
+						"columnKey" => GSX::ARTICLE_FILTER_COLUMN_SERIAL_ID,
+						"operatorKey" => GSX::ARTICLE_FILTER_OPERATOR_EQUALS,
+						"value" => [$id]
+					]
+				]
+			];
+			return $this->ArticleIdLookup($body, $pageSize, $pageNumber);
+		}
+
 		return false;
 	}
 
