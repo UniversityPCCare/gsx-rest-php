@@ -37,6 +37,7 @@ final class GSX {
 	const ARTICLE_FILTER_OPERATOR_EQUALS = "EQUALS";
 	const ARTICLE_FILTER_OPERATOR_LIKE = "LIKE";
 
+	const INVOICE_ID_MAX_LENGTH = 10;
 
 	const REPAIR_TYPE_SVNR = "SVNR"; #Service Non-Repair
 	const REPAIR_TYPE_CRBR = "CRBR"; #Carry-in Return Before Replace

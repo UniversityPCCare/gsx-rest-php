@@ -771,17 +771,27 @@ class GSXHandler {
 		return false;
 	}
 
-	/* Functions below are for Legacy SOAP API */
+
 	
-	public function InvoiceLookup($body) {
-		return $this->soapSend("InvoiceDetailsLookup", [
-			"lookupRequestData" => $body
-		]);
+	public function InvoiceLookup($id) {
+		if (is_string($id) && strlen($id) <= GSX::INVOICE_ID_MAX_LENGTH) {
+			return $this->curlSend("GET", "/invoice/details?invoiceId=$id");
+		}
+
 	}
-	
+
+	/**
+	 * @param $id
+	 * @return bool|object
+	 *
+	 * Retaining for backwards compatibility. The only way to retrieve from endpoint /invoice/details is to
+	 * retrieve by the Invoice ID anyways, so otherwise this function is useless.
+	 */
 	public function InvoiceLookupById($id) {
-		return $this->InvoiceLookup(["invoiceID"=>$id]);
+		return $this->InvoiceLookup($id);
 	}
+
+	/* Functions below are for Legacy SOAP API */
 	
 	public function AcknowledgeCommunication($body) {
 		return $this->soapSend("AcknowledgeCommunication", [
