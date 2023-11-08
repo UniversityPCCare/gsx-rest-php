@@ -40,7 +40,7 @@ class GSXHandler {
 	public function __construct($operatorEmail, $shipTo, $options=null) {
 		$this->operatorEmail = $operatorEmail;
 		$this->shipTo = $shipTo;
-		
+
 		if ($options == null or !is_array($options))
 			$config = parse_ini_file(self::INI_PATH);
 		else
@@ -121,7 +121,7 @@ class GSXHandler {
 			throw new \Exception("Invalid GSX Ship-To number provided!");
 		if (!isset($this->operatorEmail) or strlen($this->operatorEmail) === 0)
 			throw new \Exception("Invalid GSX User Email provided!");
-		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}_[A-Z]{2}/", $this->ACCEPT_LANGUAGE))
+		if (!isset($this->ACCEPT_LANGUAGE) or strlen($this->ACCEPT_LANGUAGE) === 0 or !preg_match("/[a-z]{2}[-_][A-Z]{2}/", $this->ACCEPT_LANGUAGE))
 			throw new \Exception("Invalid Accept-Language header specified in config.ini! (Default: en_US)");
 	}
 	

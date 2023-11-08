@@ -1,0 +1,2 @@
+ALTER TABLE `token` CHANGE `authTokenCreatedTs` `authTokenCreatedTs` DATETIME NULL DEFAULT NULL, CHANGE `authTokenLastUsedTs` `authTokenLastUsedTs` DATETIME NULL DEFAULT NULL;
+ALTER TABLE `requestlog` CHANGE `ts` `ts` DATETIME NULL DEFAULT NULL;

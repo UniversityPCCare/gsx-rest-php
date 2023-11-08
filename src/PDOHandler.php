@@ -42,7 +42,7 @@ class PDOHandler {
 	}
 		
 	public static function formatTime($time) {
-		return date("c", $time);
+		return date("Y-m-d H:i:s", $time);
 	}
 	
 	public function fetchTokenDetails($userEmail) {
@@ -71,10 +71,10 @@ class PDOHandler {
 	}
 	
 	public function storeAuthToken($userEmail, $authToken) {
-		$sql = "UPDATE token SET isActivationTokenConsumed = 1, authToken = ?, authTokenCreatedTs = ? WHERE userEmail = ?";
+		$sql = "UPDATE token SET isActivationTokenConsumed = 1, authToken = ?, authTokenCreatedTs = ?, authTokenLastUsedTs = ? WHERE userEmail = ?";
 		$statement = $this->pdo->prepare($sql);
 		$ts = self::formatTime(time());
-		return $statement->execute([$authToken, $ts, $userEmail]);
+		return $statement->execute([$authToken, $ts, $ts, $userEmail]);
 	}
 	
 	public function storeAuthTokenLastUsedTs($userEmail, $time) {
